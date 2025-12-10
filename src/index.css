@@ -1,6 +1,7 @@
 :root {
-  --primary-color: #5d5fdb; /* Deeper purple */
-  --primary-hover: #4b4dbb;
+  --primary-color: #5955B3;
+  --primary-hover: #4a47a0;
+
   --bg-color: #f8fafc;
   --text-main: #1e293b;
   --text-muted: #64748b;

@@ -4,11 +4,11 @@ import { Eye, EyeOff, LayoutGrid } from 'lucide-react';
 import './Login.css';
 
 const DEMO_ACCOUNTS = [
-  { role: 'Super Admin', email: 'superadmin@hr3.com', pass: 'SuperAdmin123!' },
-  { role: 'HR Admin', email: 'hradmin@hr3.com', pass: 'HRAdmin123!' },
-  { role: 'Dean', email: 'dean@hr3.com', pass: 'Dean123!' },
-  { role: 'Lecturer', email: 'jane@hr3.com', pass: 'Lecturer123!' },
-  { role: 'Admin Staff', email: 'mary@hr3.com', pass: 'AdminStaff123!' },
+  { role: 'Super Admin', email: 'superadmin@hr3.com', pass: 'SuperAdmin123!', path: '/dashboard' },
+  { role: 'HR Admin', email: 'hradmin@hr3.com', pass: 'HRAdmin123!', path: '/hr-admin' },
+  { role: 'Dean', email: 'dean@hr3.com', pass: 'Dean123!', path: '/dean' },
+  { role: 'Lecturer', email: 'jane@hr3.com', pass: 'Lecturer123!', path: '/lecturer' },
+  { role: 'Admin Staff', email: 'mary@hr3.com', pass: 'AdminStaff123!', path: '/admin-staff' },
 ];
 
 export default function Login() {
@@ -18,20 +18,25 @@ export default function Login() {
 
   const navigate = useNavigate();
 
-  const handleDemoClick = (demoEmail: string, demoPass: string) => {
+  const handleDemoClick = (demoEmail: string, demoPass: string, path: string) => {
     setEmail(demoEmail);
     setPassword(demoPass);
     // Simulate auto-login for demo
     setTimeout(() => {
-      navigate('/dashboard');
+      navigate(path);
     }, 500);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt:', { email, password });
-    // TODO: Implement actual login logic
-    navigate('/dashboard');
+    // Find matching demo account to determine dashboard
+    const account = DEMO_ACCOUNTS.find(acc => acc.email === email && acc.pass === password);
+    if (account) {
+      navigate(account.path);
+    } else {
+      // Default fallback for demo purposes
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -99,7 +104,7 @@ export default function Login() {
                 <div
                   key={index}
                   className="demo-item"
-                  onClick={() => handleDemoClick(acc.email, acc.pass)}
+                  onClick={() => handleDemoClick(acc.email, acc.pass, acc.path)}
                 >
                   <p className="demo-role">{acc.role}: <span className="demo-email">{acc.email}</span></p>
                   <p className="demo-pass">| {acc.pass}</p>

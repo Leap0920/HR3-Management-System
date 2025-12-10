@@ -1,5 +1,5 @@
 import { LayoutDashboard, Users, Building2, CalendarClock, Clock, CalendarX, Wallet, FileBarChart, Settings, LogOut } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import './Sidebar.css';
 
 const NAV_ITEMS = [
@@ -15,6 +15,13 @@ const NAV_ITEMS = [
 ];
 
 export default function SuperAdminSidebar() {
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        // For demo purposes, just navigate to login
+        navigate('/login');
+    };
+
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
@@ -46,7 +53,7 @@ export default function SuperAdminSidebar() {
                         <span className="user-role-snippet">System Administrator</span>
                     </div>
                 </div>
-                <button className="logout-btn">
+                <button className="logout-btn" onClick={handleLogout}>
                     <LogOut size={18} />
                     <span>Logout</span>
                 </button>
@@ -54,3 +61,4 @@ export default function SuperAdminSidebar() {
         </aside>
     );
 }
+
