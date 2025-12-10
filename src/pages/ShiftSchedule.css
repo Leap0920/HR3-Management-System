@@ -1,0 +1,168 @@
+.view-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.view-tabs {
+    display: flex;
+    gap: 8px;
+}
+
+.view-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    background-color: var(--white);
+    color: var(--text-muted);
+    border: 1px solid var(--input-border);
+}
+
+.view-tab:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.view-tab.active {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-color: var(--primary-color);
+}
+
+.search-bar.compact {
+    width: 280px;
+}
+
+/* Calendar Styles */
+.calendar-container {
+    background-color: var(--white);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: 60px repeat(6, 1fr);
+}
+
+.time-column {
+    border-right: 1px solid var(--input-border);
+}
+
+.day-column {
+    border-right: 1px solid var(--input-border);
+}
+
+.day-column:last-child {
+    border-right: none;
+}
+
+.header-cell {
+    padding: 12px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    background-color: #fafafa;
+    border-bottom: 1px solid var(--input-border);
+}
+
+.header-cell.friday {
+    color: var(--primary-color);
+}
+
+.time-cell {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: var(--primary-color);
+    height: 50px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--input-border);
+}
+
+.schedule-cell {
+    height: 50px;
+    border-bottom: 1px solid var(--input-border);
+    position: relative;
+}
+
+.schedule-cell.has-shift {
+    background-color: #dcfce7;
+}
+
+.shift-info {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    padding: 6px 8px;
+    background-color: #bbf7d0;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.shift-time {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.shift-location {
+    color: var(--text-muted);
+}
+
+.shift-employee {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+/* Employee List Styles */
+.list-container {
+    background-color: var(--white);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.list-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--input-border);
+}
+
+.list-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.list-container .table-container {
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.shift-cell {
+    color: var(--primary-color);
+}
+
+.assign-btn {
+    padding: 6px 12px;
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+.assign-btn:hover {
+    opacity: 0.9;
+}
