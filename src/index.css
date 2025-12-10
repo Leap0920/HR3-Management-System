@@ -1,13 +1,14 @@
 :root {
-  --primary-color: #7c7dbf; /* Approximate purple from screenshot */
-  --primary-hover: #6a6ba3;
-  --bg-color: #f3f4f6;
-  --text-main: #1f2937;
-  --text-muted: #6b7280;
+  --primary-color: #5d5fdb; /* Deeper purple */
+  --primary-hover: #4b4dbb;
+  --bg-color: #f8fafc;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
   --white: #ffffff;
-  --input-border: #d1d5db;
+  --input-border: #e2e8f0;
   --radius: 8px;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --sidebar-width: 260px;
 }
 
 * {

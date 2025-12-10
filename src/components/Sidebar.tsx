@@ -1,21 +1,27 @@
-import { LayoutDashboard, Users, UserPlus, Calendar, CreditCard, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, CalendarClock, Clock, CalendarX, Wallet, FileBarChart, Settings, LogOut } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import './Sidebar.css';
 
 const NAV_ITEMS = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: Users, label: 'All Employees', path: '/dashboard/employees' },
-    { icon: UserPlus, label: 'Recruitment', path: '/dashboard/recruitment' },
-    { icon: Calendar, label: 'Attendance', path: '/dashboard/attendance' },
-    { icon: CreditCard, label: 'Payroll', path: '/dashboard/payroll' },
-    { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
+    { icon: Users, label: 'User Management', path: '/dashboard/users' },
+    { icon: Building2, label: 'Department Management', path: '/dashboard/departments' },
+    { icon: CalendarClock, label: 'Shift & Schedule', path: '/dashboard/schedule' },
+    { icon: Clock, label: 'Attendance', path: '/dashboard/attendance' },
+    { icon: CalendarX, label: 'Leave Management', path: '/dashboard/leave' },
+    { icon: Wallet, label: 'Payroll', path: '/dashboard/payroll' },
+    { icon: FileBarChart, label: 'Reports', path: '/dashboard/reports' },
+    { icon: Settings, label: 'System Settings', path: '/dashboard/settings' },
 ];
 
 export default function Sidebar() {
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
-                <div className="sidebar-logo">HR3 System</div>
+                <div className="sidebar-logo-icon">
+                    <LayoutDashboard size={20} />
+                </div>
+                <div className="sidebar-logo">HR3</div>
             </div>
 
             <nav className="sidebar-nav">
@@ -24,7 +30,7 @@ export default function Sidebar() {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        end={item.path === '/dashboard'} // Only exact match for root dashboard
+                        end={item.path === '/dashboard'}
                     >
                         <item.icon size={20} />
                         <span>{item.label}</span>
@@ -33,8 +39,15 @@ export default function Sidebar() {
             </nav>
 
             <div className="sidebar-footer">
+                <div className="user-snippet">
+                    <div className="user-avatar-placeholder">S</div>
+                    <div className="user-details">
+                        <span className="user-name-snippet">Super Admin</span>
+                        <span className="user-role-snippet">Super Admin</span>
+                    </div>
+                </div>
                 <button className="logout-btn">
-                    <LogOut size={20} />
+                    <LogOut size={18} />
                     <span>Logout</span>
                 </button>
             </div>
