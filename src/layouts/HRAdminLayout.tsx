@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import HRAdminSidebar from '../components/HRAdminSidebar';
+import HRAdminSidebar from '../components/sidebars/HRAdminSidebar';
 import Header from '../components/Header';
 import './DashboardLayout.css';
 

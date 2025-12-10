@@ -1,12 +1,12 @@
 import { Outlet } from 'react-router-dom';
-import SuperAdminSidebar from '../components/sidebars/SuperAdminSidebar';
+import LecturerSidebar from '../components/sidebars/LecturerSidebar';
 import Header from '../components/Header';
 import './DashboardLayout.css';
 
-export default function DashboardLayout() {
+export default function LecturerLayout() {
     return (
         <div className="dashboard-layout">
-            <SuperAdminSidebar />
+            <LecturerSidebar />
             <div className="main-content">
                 <Header />
                 <main className="content-area">

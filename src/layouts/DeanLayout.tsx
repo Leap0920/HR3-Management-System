@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom';
 import DeanSidebar from '../components/sidebars/DeanSidebar';
 import Header from '../components/Header';
 import './DashboardLayout.css';
-import '../components/sidebars/RoleStyles.css';
+
 
 export default function DeanLayout() {
     return (

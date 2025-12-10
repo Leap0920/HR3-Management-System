@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import DashboardLayout from './layouts/DashboardLayout';
 import HRAdminLayout from './layouts/HRAdminLayout';
 import DeanLayout from './layouts/DeanLayout';
+import LecturerLayout from './layouts/LecturerLayout';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import DepartmentManagement from './pages/DepartmentManagement';
@@ -18,6 +19,11 @@ import FacultySchedules from './pages/dean/FacultySchedules';
 import DeanLeaveRequests from './pages/dean/DeanLeaveRequests';
 import AttendanceOverview from './pages/dean/AttendanceOverview';
 import DepartmentReports from './pages/dean/DepartmentReports';
+import LecturerDashboard from './pages/lecturer/LecturerDashboard';
+import MyAttendance from './pages/lecturer/MyAttendance';
+import MySchedule from './pages/lecturer/MySchedule';
+import LecturerLeaveRequests from './pages/lecturer/LecturerLeaveRequests';
+import Payslip from './pages/lecturer/Payslip';
 import './App.css';
 
 function App() {
@@ -58,6 +64,15 @@ function App() {
           <Route path="reports" element={<DepartmentReports />} />
         </Route>
 
+        {/* Lecturer Dashboard Routes */}
+        <Route path="/lecturer" element={<LecturerLayout />}>
+          <Route index element={<LecturerDashboard />} />
+          <Route path="attendance" element={<MyAttendance />} />
+          <Route path="schedule" element={<MySchedule />} />
+          <Route path="leave" element={<LecturerLeaveRequests />} />
+          <Route path="payslip" element={<Payslip />} />
+        </Route>
+
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
@@ -65,6 +80,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
