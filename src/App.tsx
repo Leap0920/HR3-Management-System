@@ -4,6 +4,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import HRAdminLayout from './layouts/HRAdminLayout';
 import DeanLayout from './layouts/DeanLayout';
 import LecturerLayout from './layouts/LecturerLayout';
+import AdminStaffLayout from './layouts/AdminStaffLayout';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import DepartmentManagement from './pages/DepartmentManagement';
@@ -73,6 +74,15 @@ function App() {
           <Route path="payslip" element={<Payslip />} />
         </Route>
 
+        {/* Admin Staff Dashboard Routes (same pages as Lecturer) */}
+        <Route path="/admin-staff" element={<AdminStaffLayout />}>
+          <Route index element={<LecturerDashboard />} />
+          <Route path="attendance" element={<MyAttendance />} />
+          <Route path="schedule" element={<MySchedule />} />
+          <Route path="leave" element={<LecturerLeaveRequests />} />
+          <Route path="payslip" element={<Payslip />} />
+        </Route>
+
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
@@ -80,6 +90,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
