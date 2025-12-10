@@ -2,7 +2,7 @@
     background-color: var(--white);
     border-radius: var(--radius);
     border: 1px solid var(--input-border);
-    max-width: 800px;
+    width: 100%;
 }
 
 .payslip-header {
