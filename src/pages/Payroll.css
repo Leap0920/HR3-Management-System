@@ -1,0 +1,106 @@
+.payroll-summary {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: stretch;
+}
+
+.period-selector {
+    background-color: var(--white);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.period-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.period-select {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--input-border);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-main);
+    cursor: pointer;
+    width: 100%;
+}
+
+.period-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.total-payroll-card {
+    background-color: var(--white);
+    border-radius: var(--radius);
+    padding: 20px 40px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    min-width: 220px;
+}
+
+.total-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.total-value {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.emp-role {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.salary-cell {
+    font-weight: 500;
+}
+
+.deduction-cell {
+    color: #ef4444;
+}
+
+.net-pay-cell {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.view-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #f0f1fa;
+    color: var(--primary-color);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.view-btn:hover {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+@media (max-width: 768px) {
+    .payroll-summary {
+        grid-template-columns: 1fr;
+    }
+}

@@ -6,6 +6,10 @@ import UserManagement from './pages/UserManagement';
 import DepartmentManagement from './pages/DepartmentManagement';
 import ShiftSchedule from './pages/ShiftSchedule';
 import Attendance from './pages/Attendance';
+import LeaveManagement from './pages/LeaveManagement';
+import Payroll from './pages/Payroll';
+import Reports from './pages/Reports';
+import SystemSettings from './pages/SystemSettings';
 import './App.css';
 
 function App() {
@@ -21,10 +25,10 @@ function App() {
           <Route path="departments" element={<DepartmentManagement />} />
           <Route path="schedule" element={<ShiftSchedule />} />
           <Route path="attendance" element={<Attendance />} />
-          <Route path="leave" element={<div className="page-content"><h1 className="page-title">Leave Management</h1><p>Coming soon...</p></div>} />
-          <Route path="payroll" element={<div className="page-content"><h1 className="page-title">Payroll</h1><p>Coming soon...</p></div>} />
-          <Route path="reports" element={<div className="page-content"><h1 className="page-title">Reports</h1><p>Coming soon...</p></div>} />
-          <Route path="settings" element={<div className="page-content"><h1 className="page-title">System Settings</h1><p>Coming soon...</p></div>} />
+          <Route path="leave" element={<LeaveManagement />} />
+          <Route path="payroll" element={<Payroll />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="settings" element={<SystemSettings />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -34,4 +38,5 @@ function App() {
 }
 
 export default App;
+
 
