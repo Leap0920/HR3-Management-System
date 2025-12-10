@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import DashboardLayout from './layouts/DashboardLayout';
 import HRAdminLayout from './layouts/HRAdminLayout';
+import DeanLayout from './layouts/DeanLayout';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import DepartmentManagement from './pages/DepartmentManagement';
@@ -12,6 +13,11 @@ import Payroll from './pages/Payroll';
 import Reports from './pages/Reports';
 import SystemSettings from './pages/SystemSettings';
 import HRAdminDashboard from './pages/hradmin/HRAdminDashboard';
+import DeanDashboard from './pages/dean/DeanDashboard';
+import FacultySchedules from './pages/dean/FacultySchedules';
+import DeanLeaveRequests from './pages/dean/DeanLeaveRequests';
+import AttendanceOverview from './pages/dean/AttendanceOverview';
+import DepartmentReports from './pages/dean/DepartmentReports';
 import './App.css';
 
 function App() {
@@ -43,6 +49,15 @@ function App() {
           <Route path="reports" element={<Reports />} />
         </Route>
 
+        {/* Dean Dashboard Routes */}
+        <Route path="/dean" element={<DeanLayout />}>
+          <Route index element={<DeanDashboard />} />
+          <Route path="schedules" element={<FacultySchedules />} />
+          <Route path="leave" element={<DeanLeaveRequests />} />
+          <Route path="attendance" element={<AttendanceOverview />} />
+          <Route path="reports" element={<DepartmentReports />} />
+        </Route>
+
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
@@ -50,6 +65,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
