@@ -1,6 +1,7 @@
 import { LayoutDashboard, CalendarDays, CalendarX, Clock, FileBarChart, LogOut } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import '../Sidebar.css';
+import { useAuth } from '../../context/AuthContext';
+import './Sidebar.css';
 
 const NAV_ITEMS = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dean' },
@@ -12,8 +13,10 @@ const NAV_ITEMS = [
 
 export default function DeanSidebar() {
     const navigate = useNavigate();
+    const { user, logout } = useAuth();
 
     const handleLogout = () => {
+        logout();
         navigate('/login');
     };
 
@@ -42,10 +45,10 @@ export default function DeanSidebar() {
 
             <div className="sidebar-footer">
                 <div className="user-snippet">
-                    <div className="user-avatar-placeholder dean">D</div>
+                    <div className="user-avatar-placeholder dean">{user?.name?.charAt(0) || 'D'}</div>
                     <div className="user-details">
-                        <span className="user-name-snippet">Dean Johnson</span>
-                        <span className="user-role-snippet">Dean - CS Department</span>
+                        <span className="user-name-snippet">{user?.name || 'Dean Johnson'}</span>
+                        <span className="user-role-snippet">Dean - {user?.department || 'CS Department'}</span>
                     </div>
                 </div>
                 <button className="logout-btn" onClick={handleLogout}>

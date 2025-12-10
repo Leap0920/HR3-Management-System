@@ -1,5 +1,6 @@
 import { LayoutDashboard, CalendarClock, Clock, CalendarX, Wallet, FileBarChart, LogOut } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
 const NAV_ITEMS = [
@@ -13,8 +14,10 @@ const NAV_ITEMS = [
 
 export default function HRAdminSidebar() {
     const navigate = useNavigate();
+    const { user, logout } = useAuth();
 
     const handleLogout = () => {
+        logout();
         navigate('/login');
     };
 
@@ -43,9 +46,9 @@ export default function HRAdminSidebar() {
 
             <div className="sidebar-footer">
                 <div className="user-snippet">
-                    <div className="user-avatar-placeholder hradmin">H</div>
+                    <div className="user-avatar-placeholder hradmin">{user?.name?.charAt(0) || 'H'}</div>
                     <div className="user-details">
-                        <span className="user-name-snippet">HR Admin</span>
+                        <span className="user-name-snippet">{user?.name || 'HR Admin'}</span>
                         <span className="user-role-snippet">HR Administrator</span>
                     </div>
                 </div>

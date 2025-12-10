@@ -1,5 +1,6 @@
 import { LayoutDashboard, Users, Building2, CalendarClock, Clock, CalendarX, Wallet, FileBarChart, Settings, LogOut } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
 const NAV_ITEMS = [
@@ -16,9 +17,10 @@ const NAV_ITEMS = [
 
 export default function SuperAdminSidebar() {
     const navigate = useNavigate();
+    const { user, logout } = useAuth();
 
     const handleLogout = () => {
-        // For demo purposes, just navigate to login
+        logout();
         navigate('/login');
     };
 
@@ -47,9 +49,9 @@ export default function SuperAdminSidebar() {
 
             <div className="sidebar-footer">
                 <div className="user-snippet">
-                    <div className="user-avatar-placeholder superadmin">S</div>
+                    <div className="user-avatar-placeholder superadmin">{user?.name?.charAt(0) || 'S'}</div>
                     <div className="user-details">
-                        <span className="user-name-snippet">Super Admin</span>
+                        <span className="user-name-snippet">{user?.name || 'Super Admin'}</span>
                         <span className="user-role-snippet">System Administrator</span>
                     </div>
                 </div>
@@ -61,4 +63,5 @@ export default function SuperAdminSidebar() {
         </aside>
     );
 }
+
 

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, LayoutGrid } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 const DEMO_ACCOUNTS = [
@@ -11,32 +12,66 @@ const DEMO_ACCOUNTS = [
   { role: 'Admin Staff', email: 'mary@hr3.com', pass: 'AdminStaff123!', path: '/admin-staff' },
 ];
 
+// Map roles to dashboard paths
+const roleDashboardMap: Record<string, string> = {
+  superadmin: '/dashboard',
+  hradmin: '/hr-admin',
+  dean: '/dean',
+  lecturer: '/lecturer',
+  adminstaff: '/admin-staff'
+};
+
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
+  const { login, logout, isAuthenticated, user } = useAuth();
 
-  const handleDemoClick = (demoEmail: string, demoPass: string, path: string) => {
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const dashboard = roleDashboardMap[user.role] || '/dashboard';
+      navigate(dashboard, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  const handleDemoClick = async (demoEmail: string, demoPass: string) => {
+    // Clear any existing auth state first
+    logout();
+
     setEmail(demoEmail);
     setPassword(demoPass);
-    // Simulate auto-login for demo
-    setTimeout(() => {
-      navigate(path);
-    }, 500);
+    setError('');
+    setIsSubmitting(true);
+
+    const result = await login(demoEmail, demoPass);
+
+    if (!result.success) {
+      setError(result.error || 'Login failed');
+    }
+    setIsSubmitting(false);
+    // Navigation handled by useEffect when auth state changes
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Find matching demo account to determine dashboard
-    const account = DEMO_ACCOUNTS.find(acc => acc.email === email && acc.pass === password);
-    if (account) {
-      navigate(account.path);
-    } else {
-      // Default fallback for demo purposes
-      navigate('/dashboard');
+    // Clear any existing auth state first
+    logout();
+
+    setError('');
+    setIsSubmitting(true);
+
+    const result = await login(email, password);
+
+    if (!result.success) {
+      setError(result.error || 'Login failed');
     }
+    setIsSubmitting(false);
+    // Navigation handled by useEffect when auth state changes
   };
 
   return (
@@ -55,6 +90,19 @@ export default function Login() {
             <p className="subtitle">Access your HR3 Management System</p>
           </div>
 
+          {error && (
+            <div className="error-message" style={{
+              background: '#fee2e2',
+              color: '#dc2626',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              fontSize: '0.9rem'
+            }}>
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="login-form">
             <div className="form-group">
               <label htmlFor="email">Email Address</label>
@@ -65,6 +113,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -81,6 +130,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={isSubmitting}
                 />
                 <button
                   type="button"
@@ -92,8 +142,8 @@ export default function Login() {
               </div>
             </div>
 
-            <button type="submit" className="submit-btn">
-              Sign In
+            <button type="submit" className="submit-btn" disabled={isSubmitting}>
+              {isSubmitting ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
 
@@ -104,7 +154,8 @@ export default function Login() {
                 <div
                   key={index}
                   className="demo-item"
-                  onClick={() => handleDemoClick(acc.email, acc.pass, acc.path)}
+                  onClick={() => !isSubmitting && handleDemoClick(acc.email, acc.pass)}
+                  style={{ opacity: isSubmitting ? 0.5 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
                 >
                   <p className="demo-role">{acc.role}: <span className="demo-email">{acc.email}</span></p>
                   <p className="demo-pass">| {acc.pass}</p>
