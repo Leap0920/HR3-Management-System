@@ -1,6 +1,5 @@
 import { Outlet } from 'react-router-dom';
 import SuperAdminSidebar from '../components/sidebars/SuperAdminSidebar';
-import Header from '../components/Header';
 import './DashboardLayout.css';
 
 export default function DashboardLayout() {
@@ -8,7 +7,6 @@ export default function DashboardLayout() {
         <div className="dashboard-layout">
             <SuperAdminSidebar />
             <div className="main-content">
-                <Header />
                 <main className="content-area">
                     <Outlet />
                 </main>

@@ -1,6 +1,5 @@
 import { Outlet } from 'react-router-dom';
 import LecturerSidebar from '../components/sidebars/LecturerSidebar';
-import Header from '../components/Header';
 import './DashboardLayout.css';
 
 export default function LecturerLayout() {
@@ -8,7 +7,6 @@ export default function LecturerLayout() {
         <div className="dashboard-layout">
             <LecturerSidebar />
             <div className="main-content">
-                <Header />
                 <main className="content-area">
                     <Outlet />
                 </main>
