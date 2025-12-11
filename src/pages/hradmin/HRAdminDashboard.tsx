@@ -1,39 +1,106 @@
-import { Users, UserCheck, CalendarX, Wallet, TrendingUp, Clock, FileText, Bell } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, UserCheck, CalendarX, Wallet, TrendingUp, Clock, FileText, Bell, Loader2 } from 'lucide-react';
+import { dashboardAPI, attendanceAPI, leaveAPI, type DashboardStats, type Attendance } from '../../services/api';
 import './HRAdminDashboard.css';
 
-const STATS = [
-    { label: 'Total Employees', value: '21', icon: Users, color: '#5d5fdb' },
-    { label: 'Present Today', value: '18', icon: UserCheck, color: '#22c55e' },
-    { label: 'Pending Leaves', value: '4', icon: CalendarX, color: '#f97316' },
-    { label: 'Total Payroll', value: '₱47,718.6', subtext: 'Current period', icon: Wallet, color: '#f97316' },
-];
+const formatCurrency = (amount: number) => {
+    return '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 
-const ATTENDANCE_DATA = [
-    { day: 'Mon', absent: 2, late: 3, present: 16 },
-    { day: 'Tue', absent: 1, late: 2, present: 18 },
-    { day: 'Wed', absent: 1, late: 4, present: 16 },
-    { day: 'Thu', absent: 2, late: 2, present: 17 },
-    { day: 'Fri', absent: 1, late: 1, present: 19 },
-    { day: 'Sat', absent: 3, late: 2, present: 5 },
-    { day: 'Sun', absent: 0, late: 0, present: 2 },
-];
+const formatTime = (dateStr: string | null) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+};
 
-const PAYROLL_DATA = [
-    { dept: 'CS', amount: 18000 },
-    { dept: 'ENG', amount: 15000 },
-    { dept: 'BUS', amount: 14000 },
-];
-
-const RECENT_ATTENDANCE = [
-    { employee: 'Jane Smith', department: 'Computer Science', date: '11/24/2025', timeIn: '8:00 AM', timeOut: '5:30 PM', status: 'Present' },
-    { employee: 'Robert Chen', department: 'Engineering', date: '11/24/2025', timeIn: '8:15 AM', timeOut: '4:00 PM', status: 'Late' },
-    { employee: 'Mary Johnson', department: 'Administration', date: '11/24/2025', timeIn: '8:00 AM', timeOut: '6:00 PM', status: 'Present' },
-];
-
-const maxAttendance = 20;
-const maxPayroll = 20000;
+const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+};
 
 export default function HRAdminDashboard() {
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [recentAttendance, setRecentAttendance] = useState<Attendance[]>([]);
+    const [attendanceSummary, setAttendanceSummary] = useState<{ present: number; late: number; absent: number }>({ present: 0, late: 0, absent: 0 });
+    const [leaveSummary, setLeaveSummary] = useState<{ pending: number; approved: number; rejected: number }>({ pending: 0, approved: 0, rejected: 0 });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const [statsData, attendanceData, leaveSummaryData, attendanceSummaryData] = await Promise.all([
+                    dashboardAPI.getStats(),
+                    attendanceAPI.getAll(),
+                    dashboardAPI.getLeaveSummary(),
+                    dashboardAPI.getAttendanceSummary()
+                ]);
+
+                setStats(statsData);
+                setRecentAttendance(attendanceData.slice(0, 5));
+
+                // Process attendance summary
+                const attSummary = { present: 0, late: 0, absent: 0 };
+                attendanceSummaryData.forEach(item => {
+                    if (item._id === 'present') attSummary.present = item.count;
+                    else if (item._id === 'late') attSummary.late = item.count;
+                    else if (item._id === 'absent') attSummary.absent = item.count;
+                });
+                setAttendanceSummary(attSummary);
+
+                // Process leave summary
+                const lvSummary = { pending: 0, approved: 0, rejected: 0 };
+                leaveSummaryData.summary.forEach(item => {
+                    if (item._id === 'pending') lvSummary.pending = item.count;
+                    else if (item._id === 'approved') lvSummary.approved = item.count;
+                    else if (item._id === 'rejected') lvSummary.rejected = item.count;
+                });
+                setLeaveSummary(lvSummary);
+
+                setError(null);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="page-content hr-dashboard" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <Loader2 className="spin" size={40} />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="page-content hr-dashboard">
+                <div style={{ padding: '20px', background: '#fee2e2', borderRadius: '8px', color: '#dc2626' }}>
+                    Error: {error}
+                </div>
+            </div>
+        );
+    }
+
+    const STATS = [
+        { label: 'Total Employees', value: stats?.totalUsers?.toString() || '0', icon: Users, color: '#5d5fdb' },
+        { label: 'Present Today', value: stats?.presentToday?.toString() || '0', icon: UserCheck, color: '#22c55e' },
+        { label: 'Pending Leaves', value: stats?.pendingLeaves?.toString() || '0', icon: CalendarX, color: '#f97316' },
+        { label: 'Total Payroll', value: formatCurrency(stats?.totalPayroll || 0), subtext: 'Current period', icon: Wallet, color: '#f97316' },
+    ];
+
+    const totalLeaves = leaveSummary.pending + leaveSummary.approved + leaveSummary.rejected;
+    const vacationPercent = totalLeaves > 0 ? Math.round((leaveSummary.approved / totalLeaves) * 100) : 0;
+    const sickPercent = totalLeaves > 0 ? Math.round((leaveSummary.pending / totalLeaves) * 100) : 0;
+    const emergencyPercent = totalLeaves > 0 ? Math.round((leaveSummary.rejected / totalLeaves) * 100) : 0;
+
+    const totalAttendance = attendanceSummary.present + attendanceSummary.late + attendanceSummary.absent;
+    const attendanceRate = totalAttendance > 0 ? ((attendanceSummary.present + attendanceSummary.late) / totalAttendance * 100).toFixed(1) : '0';
+
     return (
         <div className="page-content hr-dashboard">
             <div className="dashboard-header-section">
@@ -72,32 +139,22 @@ export default function HRAdminDashboard() {
             <h2 className="section-title analytics-title">Analytics & Insights</h2>
 
             <div className="analytics-grid">
-                {/* Attendance Trends Chart */}
+                {/* Attendance Summary */}
                 <div className="chart-card">
-                    <h3 className="chart-title">Attendance Trends (Last 7 Days)</h3>
-                    <div className="bar-chart">
-                        {ATTENDANCE_DATA.map((day, index) => (
-                            <div key={index} className="bar-group">
-                                <div className="bars">
-                                    <div
-                                        className="bar absent"
-                                        style={{ height: `${(day.absent / maxAttendance) * 100}%` }}
-                                        title={`Absent: ${day.absent}`}
-                                    ></div>
-                                    <div
-                                        className="bar late"
-                                        style={{ height: `${(day.late / maxAttendance) * 100}%` }}
-                                        title={`Late: ${day.late}`}
-                                    ></div>
-                                    <div
-                                        className="bar present"
-                                        style={{ height: `${(day.present / maxAttendance) * 100}%` }}
-                                        title={`Present: ${day.present}`}
-                                    ></div>
-                                </div>
-                                <span className="bar-label">{day.day}</span>
-                            </div>
-                        ))}
+                    <h3 className="chart-title">Attendance Summary (Last 7 Days)</h3>
+                    <div className="summary-stats">
+                        <div className="summary-item">
+                            <span className="summary-label">Present</span>
+                            <span className="summary-value" style={{ color: '#22c55e' }}>{attendanceSummary.present}</span>
+                        </div>
+                        <div className="summary-item">
+                            <span className="summary-label">Late</span>
+                            <span className="summary-value" style={{ color: '#f97316' }}>{attendanceSummary.late}</span>
+                        </div>
+                        <div className="summary-item">
+                            <span className="summary-label">Absent</span>
+                            <span className="summary-value" style={{ color: '#ef4444' }}>{attendanceSummary.absent}</span>
+                        </div>
                     </div>
                     <div className="chart-legend">
                         <span className="legend-item"><span className="dot absent"></span> Absent</span>
@@ -106,7 +163,7 @@ export default function HRAdminDashboard() {
                     </div>
                 </div>
 
-                {/* Leave Distribution Pie Chart */}
+                {/* Leave Distribution */}
                 <div className="chart-card">
                     <h3 className="chart-title">Leave Distribution</h3>
                     <div className="pie-chart-container">
@@ -116,37 +173,17 @@ export default function HRAdminDashboard() {
                         <div className="pie-legend">
                             <div className="pie-legend-item">
                                 <span className="pie-color vacation"></span>
-                                <span>Vacation Leave: 45%</span>
+                                <span>Approved: {vacationPercent}%</span>
                             </div>
                             <div className="pie-legend-item">
                                 <span className="pie-color sick"></span>
-                                <span>Sick Leave: 35%</span>
+                                <span>Pending: {sickPercent}%</span>
                             </div>
                             <div className="pie-legend-item">
                                 <span className="pie-color emergency"></span>
-                                <span>Emergency Leave: 20%</span>
+                                <span>Rejected: {emergencyPercent}%</span>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                {/* Payroll by Department */}
-                <div className="chart-card">
-                    <h3 className="chart-title">Payroll by Department (₱)</h3>
-                    <div className="vertical-bar-chart">
-                        {PAYROLL_DATA.map((dept, index) => (
-                            <div key={index} className="vertical-bar-group">
-                                <div className="vertical-bar-wrapper">
-                                    <div
-                                        className="vertical-bar"
-                                        style={{ height: `${(dept.amount / maxPayroll) * 100}%` }}
-                                    >
-                                        <span className="bar-value">{(dept.amount / 1000).toFixed(0)}k</span>
-                                    </div>
-                                </div>
-                                <span className="bar-label">{dept.dept}</span>
-                            </div>
-                        ))}
                     </div>
                 </div>
 
@@ -157,21 +194,21 @@ export default function HRAdminDashboard() {
                         <div className="metric-item green">
                             <div className="metric-info">
                                 <span className="metric-label">Attendance Rate</span>
-                                <span className="metric-value">94.5%</span>
+                                <span className="metric-value">{attendanceRate}%</span>
                             </div>
                             <TrendingUp size={24} className="metric-icon" />
                         </div>
                         <div className="metric-item orange">
                             <div className="metric-info">
-                                <span className="metric-label">Leave Requests (Month)</span>
-                                <span className="metric-value">12</span>
+                                <span className="metric-label">Pending Leave Requests</span>
+                                <span className="metric-value">{leaveSummary.pending}</span>
                             </div>
                             <FileText size={24} className="metric-icon" />
                         </div>
                         <div className="metric-item blue">
                             <div className="metric-info">
-                                <span className="metric-label">Overtime Hours</span>
-                                <span className="metric-value">48 hrs</span>
+                                <span className="metric-label">Total Departments</span>
+                                <span className="metric-value">{stats?.totalDepartments || 0}</span>
                             </div>
                             <Clock size={24} className="metric-icon" />
                         </div>
@@ -195,20 +232,28 @@ export default function HRAdminDashboard() {
                             </tr>
                         </thead>
                         <tbody>
-                            {RECENT_ATTENDANCE.map((record, index) => (
-                                <tr key={index}>
-                                    <td className="name-cell">{record.employee}</td>
-                                    <td className="role-cell">{record.department}</td>
-                                    <td>{record.date}</td>
-                                    <td>{record.timeIn}</td>
-                                    <td>{record.timeOut}</td>
-                                    <td>
-                                        <span className={`status-badge-pill ${record.status.toLowerCase()}`}>
-                                            {record.status}
-                                        </span>
+                            {recentAttendance.length > 0 ? (
+                                recentAttendance.map((record) => (
+                                    <tr key={record._id}>
+                                        <td className="name-cell">{record.userId?.name || 'Unknown'}</td>
+                                        <td className="role-cell">{record.userId?.department || '-'}</td>
+                                        <td>{formatDate(record.date)}</td>
+                                        <td>{formatTime(record.timeIn)}</td>
+                                        <td>{formatTime(record.timeOut)}</td>
+                                        <td>
+                                            <span className={`status-badge-pill ${record.status}`}>
+                                                {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>
+                                        No attendance records found
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>

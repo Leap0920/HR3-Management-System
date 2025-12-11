@@ -1,43 +1,123 @@
-import { Building2, Plus, Pencil, Trash2, Users } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Building2, Plus, Pencil, Trash2, Users, X, Loader2 } from 'lucide-react';
+import { departmentsAPI, usersAPI, type Department, type User } from '../services/api';
 import './DepartmentManagement.css';
 
-interface Department {
-    id: number;
+interface DeptFormData {
     name: string;
     code: string;
-    employeeCount: number;
-    head: string;
     description: string;
+    headId: string;
+    status: string;
 }
 
-const DEPARTMENTS_DATA: Department[] = [
-    {
-        id: 1,
-        name: 'Computer Science',
-        code: 'CS',
-        employeeCount: 12,
-        head: 'Dean Johnson',
-        description: 'Computer Science and IT Department'
-    },
-    {
-        id: 2,
-        name: 'Engineering',
-        code: 'ENG',
-        employeeCount: 8,
-        head: 'Dr. Smith',
-        description: 'Engineering Department'
-    },
-    {
-        id: 3,
-        name: 'Business',
-        code: 'BUS',
-        employeeCount: 6,
-        head: 'Prof. Williams',
-        description: 'Business and Management Department'
-    },
-];
+const initialFormData: DeptFormData = {
+    name: '',
+    code: '',
+    description: '',
+    headId: '',
+    status: 'active'
+};
 
 export default function DepartmentManagement() {
+    const [departments, setDepartments] = useState<Department[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [showModal, setShowModal] = useState(false);
+    const [editingDept, setEditingDept] = useState<Department | null>(null);
+    const [formData, setFormData] = useState<DeptFormData>(initialFormData);
+    const [submitting, setSubmitting] = useState(false);
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [deptsData, usersData] = await Promise.all([
+                departmentsAPI.getAll(),
+                usersAPI.getAll().catch(() => [] as User[])
+            ]);
+            setDepartments(deptsData);
+            setUsers(usersData);
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load departments');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => { fetchData(); }, []);
+
+    const handleOpenModal = (dept?: Department) => {
+        if (dept) {
+            setEditingDept(dept);
+            setFormData({
+                name: dept.name,
+                code: dept.code,
+                description: dept.description || '',
+                headId: dept.headId?._id || '',
+                status: dept.status
+            });
+        } else {
+            setEditingDept(null);
+            setFormData(initialFormData);
+        }
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setEditingDept(null);
+        setFormData(initialFormData);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            setSubmitting(true);
+            const data = {
+                name: formData.name,
+                code: formData.code.toUpperCase(),
+                description: formData.description,
+                headId: formData.headId || undefined,
+                status: formData.status
+            };
+            if (editingDept) {
+                await departmentsAPI.update(editingDept._id, data);
+            } else {
+                await departmentsAPI.create(data);
+            }
+            handleCloseModal();
+            await fetchData();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to save department');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (dept: Department) => {
+        if (!confirm(`Are you sure you want to delete ${dept.name}?`)) return;
+        try {
+            await departmentsAPI.delete(dept._id);
+            await fetchData();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to delete department');
+        }
+    };
+
+    const getEmployeeCount = (deptName: string) => {
+        return users.filter(u => u.department === deptName).length;
+    };
+
+    if (loading) {
+        return (
+            <div className="page-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <Loader2 className="spin" size={40} />
+            </div>
+        );
+    }
+
     return (
         <div className="page-content">
             <div className="page-header">
@@ -45,24 +125,30 @@ export default function DepartmentManagement() {
                     <h1 className="page-title">Department Management</h1>
                     <p className="page-subtitle">Manage organizational departments and units</p>
                 </div>
-                <button className="primary-btn">
+                <button className="primary-btn" onClick={() => handleOpenModal()}>
                     <Plus size={18} />
                     <span>Add Department</span>
                 </button>
             </div>
 
+            {error && (
+                <div style={{ padding: '12px 16px', background: '#fee2e2', color: '#dc2626', borderRadius: '8px', marginBottom: '16px' }}>
+                    {error}
+                </div>
+            )}
+
             <div className="departments-grid">
-                {DEPARTMENTS_DATA.map((dept) => (
-                    <div key={dept.id} className="department-card">
+                {departments.map((dept) => (
+                    <div key={dept._id} className="department-card">
                         <div className="card-header">
                             <div className="dept-icon">
                                 <Building2 size={20} />
                             </div>
                             <div className="card-actions">
-                                <button className="action-icon edit">
+                                <button className="action-icon edit" onClick={() => handleOpenModal(dept)}>
                                     <Pencil size={16} />
                                 </button>
-                                <button className="action-icon delete">
+                                <button className="action-icon delete" onClick={() => handleDelete(dept)}>
                                     <Trash2 size={16} />
                                 </button>
                             </div>
@@ -74,15 +160,66 @@ export default function DepartmentManagement() {
                         <div className="dept-info">
                             <div className="info-row">
                                 <Users size={16} />
-                                <span>{dept.employeeCount} Employees</span>
+                                <span>{getEmployeeCount(dept.name)} Employees</span>
                             </div>
-                            <p className="dept-head">Head: {dept.head}</p>
+                            <p className="dept-head">Head: {dept.headId?.name || 'Not assigned'}</p>
                         </div>
 
-                        <p className="dept-description">{dept.description}</p>
+                        <p className="dept-description">{dept.description || 'No description'}</p>
+                        
+                        <span className={`status-badge ${dept.status}`} style={{ marginTop: '12px' }}>
+                            {dept.status.charAt(0).toUpperCase() + dept.status.slice(1)}
+                        </span>
                     </div>
                 ))}
             </div>
+
+            {showModal && (
+                <div className="modal-overlay" onClick={handleCloseModal}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>{editingDept ? 'Edit Department' : 'Add New Department'}</h2>
+                            <button className="close-btn" onClick={handleCloseModal}><X size={20} /></button>
+                        </div>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Department Name</label>
+                                <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+                            </div>
+                            <div className="form-group">
+                                <label>Department Code</label>
+                                <input type="text" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} required placeholder="e.g., CS, ENG, BUS" />
+                            </div>
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} />
+                            </div>
+                            <div className="form-group">
+                                <label>Department Head</label>
+                                <select value={formData.headId} onChange={e => setFormData({...formData, headId: e.target.value})}>
+                                    <option value="">Select Head</option>
+                                    {users.filter(u => ['dean', 'hradmin', 'superadmin'].includes(u.role)).map(user => (
+                                        <option key={user._id} value={user._id}>{user.name} ({user.role})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Status</label>
+                                <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <div className="modal-actions">
+                                <button type="button" className="btn-secondary" onClick={handleCloseModal}>Cancel</button>
+                                <button type="submit" className="btn-primary" disabled={submitting}>
+                                    {submitting ? 'Saving...' : editingDept ? 'Update' : 'Create'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

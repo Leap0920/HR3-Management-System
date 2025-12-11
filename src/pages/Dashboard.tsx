@@ -1,51 +1,95 @@
-import { Users, Building2, Activity, TrendingUp, Wallet, Settings, Bell } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, Building2, Activity, TrendingUp, Wallet, Settings, Bell, Loader2 } from 'lucide-react';
+import { dashboardAPI, type DashboardStats } from '../services/api';
 import './Dashboard.css';
 
-const STATS = [
-    {
-        label: 'Total System Users',
-        value: '8',
-        subtext: 'Employees, Admins & Deans',
-        icon: Users,
-        iconColor: '#5d5fdb',
-        bg: 'white'
-    },
-    {
-        label: 'Total Departments',
-        value: '3',
-        subtext: 'Academic & Admin Units',
-        icon: Building2,
-        iconColor: '#5d5fdb',
-        bg: 'white'
-    },
-    {
-        label: 'System Uptime',
-        value: '99.9%',
-        subtext: 'Last 30 days',
-        icon: Activity,
-        iconColor: '#5d5fdb',
-        bg: 'white'
-    }
-];
-
-const SECOND_ROW_STATS = [
-    {
-        label: 'Active Users Today',
-        value: '31',
-        icon: TrendingUp,
-        iconColor: '#5d5fdb',
-        bg: 'white'
-    },
-    {
-        label: 'Total Payroll (current)',
-        value: '₱47,718.6',
-        icon: Wallet,
-        iconColor: '#5d5fdb',
-        bg: 'white'
-    }
-];
+const formatCurrency = (amount: number) => {
+    return '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 
 export default function Dashboard() {
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                setLoading(true);
+                const data = await dashboardAPI.getStats();
+                setStats(data);
+                setError(null);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStats();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <Loader2 className="spin" size={40} />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="dashboard-content">
+                <div style={{ padding: '20px', background: '#fee2e2', borderRadius: '8px', color: '#dc2626' }}>
+                    Error: {error}
+                </div>
+            </div>
+        );
+    }
+
+    const STATS = [
+        {
+            label: 'Total System Users',
+            value: stats?.totalUsers?.toString() || '0',
+            subtext: 'Employees, Admins & Deans',
+            icon: Users,
+            iconColor: '#5d5fdb',
+            bg: 'white'
+        },
+        {
+            label: 'Total Departments',
+            value: stats?.totalDepartments?.toString() || '0',
+            subtext: 'Academic & Admin Units',
+            icon: Building2,
+            iconColor: '#5d5fdb',
+            bg: 'white'
+        },
+        {
+            label: 'System Uptime',
+            value: stats?.systemUptime || '99.9%',
+            subtext: 'Last 30 days',
+            icon: Activity,
+            iconColor: '#5d5fdb',
+            bg: 'white'
+        }
+    ];
+
+    const SECOND_ROW_STATS = [
+        {
+            label: 'Present Today',
+            value: stats?.presentToday?.toString() || '0',
+            icon: TrendingUp,
+            iconColor: '#5d5fdb',
+            bg: 'white'
+        },
+        {
+            label: 'Total Payroll (current)',
+            value: formatCurrency(stats?.totalPayroll || 0),
+            icon: Wallet,
+            iconColor: '#5d5fdb',
+            bg: 'white'
+        }
+    ];
+
     return (
         <div className="dashboard-content">
             <div className="dashboard-header-section">
@@ -98,8 +142,8 @@ export default function Dashboard() {
                 <div className="stat-card purple-card">
                     <div className="purple-card-content">
                         <Settings size={28} className="spin-slow" />
-                        <span className="purple-value">1</span>
-                        <span className="purple-label">Pending Actions</span>
+                        <span className="purple-value">{stats?.pendingLeaves || 0}</span>
+                        <span className="purple-label">Pending Leave Requests</span>
                     </div>
                 </div>
             </div>
@@ -133,11 +177,11 @@ export default function Dashboard() {
                     </div>
                     <div className="info-item">
                         <span>Last Backup</span>
-                        <span className="info-value">11/24/2025</span>
+                        <span className="info-value">{new Date().toLocaleDateString()}</span>
                     </div>
                     <div className="info-item">
                         <span>Database Status</span>
-                        <span className="info-value status-healthy">● Healthy</span>
+                        <span className="info-value status-healthy">● {stats?.databaseStatus || 'Healthy'}</span>
                     </div>
                 </div>
             </div>

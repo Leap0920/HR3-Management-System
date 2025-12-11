@@ -22,6 +22,14 @@ app.use(cors({
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/departments', require('./routes/departments'));
+app.use('/api/attendance', require('./routes/attendance'));
+app.use('/api/leave', require('./routes/leave'));
+app.use('/api/schedules', require('./routes/schedules'));
+app.use('/api/payroll', require('./routes/payroll'));
+app.use('/api/settings', require('./routes/settings'));
+app.use('/api/dashboard', require('./routes/dashboard'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

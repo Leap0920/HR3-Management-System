@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const User = require('../models/User');
+const Department = require('../models/Department');
+const Settings = require('../models/Settings');
 
 // Load env vars
 dotenv.config();
@@ -13,7 +15,7 @@ mongoose.connect(process.env.MONGODB_URI)
         process.exit(1);
     });
 
-// Demo users to seed
+// Demo users
 const users = [
     {
         name: 'Super Admin',
@@ -52,24 +54,86 @@ const users = [
     }
 ];
 
-const seedUsers = async () => {
+// Demo departments
+const departments = [
+    {
+        name: 'Computer Science',
+        code: 'CS',
+        description: 'Department of Computer Science and Information Technology',
+        status: 'active'
+    },
+    {
+        name: 'Human Resources',
+        code: 'HR',
+        description: 'Human Resources Department',
+        status: 'active'
+    },
+    {
+        name: 'Administration',
+        code: 'ADMIN',
+        description: 'Administrative and Management Department',
+        status: 'active'
+    },
+    {
+        name: 'Registrar',
+        code: 'REG',
+        description: 'Student Records and Registration Office',
+        status: 'active'
+    }
+];
+
+// Default settings
+const defaultSettings = [
+    { key: 'company_name', value: 'HR3 Management System', category: 'general', description: 'Organization name' },
+    { key: 'work_hours_start', value: '08:00', category: 'attendance', description: 'Work start time' },
+    { key: 'work_hours_end', value: '17:00', category: 'attendance', description: 'Work end time' },
+    { key: 'late_threshold_minutes', value: 15, category: 'attendance', description: 'Minutes after start time to be marked late' },
+    { key: 'overtime_rate', value: 1.25, category: 'payroll', description: 'Overtime pay multiplier' },
+    { key: 'sss_rate', value: 0.045, category: 'payroll', description: 'SSS contribution rate' },
+    { key: 'philhealth_rate', value: 0.02, category: 'payroll', description: 'PhilHealth contribution rate' },
+    { key: 'pagibig_contribution', value: 100, category: 'payroll', description: 'Fixed Pag-IBIG contribution' },
+    { key: 'tax_rate', value: 0.1, category: 'payroll', description: 'Withholding tax rate' },
+    { key: 'vacation_leave_days', value: 15, category: 'leave', description: 'Annual vacation leave allowance' },
+    { key: 'sick_leave_days', value: 15, category: 'leave', description: 'Annual sick leave allowance' }
+];
+
+const seedData = async () => {
     try {
-        // Clear existing users
+        // Clear existing data
         await User.deleteMany({});
-        console.log('Existing users cleared');
+        await Department.deleteMany({});
+        await Settings.deleteMany({});
+        console.log('Existing data cleared');
 
-        // Insert new users
+        // Seed departments
+        const createdDepts = await Department.create(departments);
+        console.log('Departments seeded:');
+        createdDepts.forEach(d => console.log(`  - ${d.name} (${d.code})`));
+
+        // Seed users
         const createdUsers = await User.create(users);
-        console.log('Demo users seeded successfully:');
-        createdUsers.forEach(user => {
-            console.log(`  - ${user.name} (${user.email}) - ${user.role}`);
-        });
+        console.log('Users seeded:');
+        createdUsers.forEach(u => console.log(`  - ${u.name} (${u.email}) - ${u.role}`));
 
+        // Set department heads
+        const deanUser = createdUsers.find(u => u.role === 'dean');
+        const csDept = createdDepts.find(d => d.code === 'CS');
+        if (deanUser && csDept) {
+            csDept.headId = deanUser._id;
+            await csDept.save();
+            console.log(`Set ${deanUser.name} as head of ${csDept.name}`);
+        }
+
+        // Seed settings
+        await Settings.create(defaultSettings);
+        console.log('Default settings seeded');
+
+        console.log('\n✅ Database seeded successfully!');
         process.exit(0);
     } catch (error) {
-        console.error('Error seeding users:', error.message);
+        console.error('Error seeding data:', error.message);
         process.exit(1);
     }
 };
 
-seedUsers();
+seedData();
