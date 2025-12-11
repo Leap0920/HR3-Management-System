@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Download, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import { payrollAPI, type Payroll } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import './Payslip.css';
@@ -14,6 +15,7 @@ export default function Payslip() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [downloading, setDownloading] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -37,6 +39,162 @@ export default function Payslip() {
         const newIndex = currentIndex + delta;
         if (newIndex >= 0 && newIndex < payslips.length) {
             setCurrentIndex(newIndex);
+        }
+    };
+
+    const downloadPayslipPDF = () => {
+        if (!currentPayslip) return;
+
+        setDownloading(true);
+
+        try {
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+
+            // Header with purple background
+            doc.setFillColor(89, 85, 179); // Primary color
+            doc.rect(0, 0, pageWidth, 45, 'F');
+
+            // Company name
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont('helvetica', 'bold');
+            doc.text('HR3 Management System', pageWidth / 2, 20, { align: 'center' });
+
+            // Payslip title
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Payslip for ${currentPayslip.period}`, pageWidth / 2, 32, { align: 'center' });
+
+            // Reset text color
+            doc.setTextColor(30, 41, 59);
+            let y = 60;
+
+            // Employee Information Header
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('EMPLOYEE INFORMATION', 20, y);
+            y += 10;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+
+            // Employee details in two columns
+            const leftCol = 20;
+            const rightCol = 110;
+
+            doc.setTextColor(100, 116, 139);
+            doc.text('Employee Name:', leftCol, y);
+            doc.text('Employee ID:', rightCol, y);
+            doc.setTextColor(30, 41, 59);
+            doc.text(user?.name || 'N/A', leftCol + 35, y);
+            doc.text(user?.email || 'N/A', rightCol + 30, y);
+            y += 8;
+
+            doc.setTextColor(100, 116, 139);
+            doc.text('Department:', leftCol, y);
+            doc.text('Position:', rightCol, y);
+            doc.setTextColor(30, 41, 59);
+            doc.text(user?.department || 'N/A', leftCol + 28, y);
+            doc.text(user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'N/A', rightCol + 22, y);
+            y += 15;
+
+            // Divider line
+            doc.setDrawColor(226, 232, 240);
+            doc.line(20, y, pageWidth - 20, y);
+            y += 15;
+
+            // Earnings Section
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(34, 197, 94);
+            doc.text('EARNINGS', 20, y);
+            y += 10;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(30, 41, 59);
+
+            const drawPayRow = (label: string, amount: number, isTotal: boolean = false) => {
+                if (isTotal) {
+                    doc.setFont('helvetica', 'bold');
+                }
+                doc.text(label, 25, y);
+                doc.text(formatCurrency(amount), pageWidth - 25, y, { align: 'right' });
+                if (isTotal) {
+                    doc.setFont('helvetica', 'normal');
+                }
+                y += 8;
+            };
+
+            drawPayRow('Basic Salary', currentPayslip.basicSalary || 0);
+            drawPayRow('Overtime Pay', currentPayslip.overtimePay || 0);
+            drawPayRow('Allowances', currentPayslip.allowances || 0);
+
+            doc.setTextColor(34, 197, 94);
+            drawPayRow('Gross Pay', currentPayslip.grossPay || 0, true);
+            y += 5;
+
+            // Deductions Section
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(239, 68, 68);
+            doc.text('DEDUCTIONS', 20, y);
+            y += 10;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(30, 41, 59);
+
+            drawPayRow('SSS Contribution', currentPayslip.deductions?.sss || 0);
+            drawPayRow('PhilHealth Contribution', currentPayslip.deductions?.philhealth || 0);
+            drawPayRow('Pag-IBIG Contribution', currentPayslip.deductions?.pagibig || 0);
+            drawPayRow('Withholding Tax', currentPayslip.deductions?.tax || 0);
+            drawPayRow('Tardiness', currentPayslip.deductions?.tardiness || 0);
+
+            doc.setTextColor(239, 68, 68);
+            drawPayRow('Total Deductions', currentPayslip.totalDeductions || 0, true);
+            y += 10;
+
+            // Divider line
+            doc.setDrawColor(226, 232, 240);
+            doc.line(20, y, pageWidth - 20, y);
+            y += 15;
+
+            // Net Pay Section
+            doc.setFillColor(89, 85, 179);
+            doc.roundedRect(20, y - 5, pageWidth - 40, 25, 3, 3, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('NET PAY', 30, y + 10);
+            doc.text(formatCurrency(currentPayslip.netPay || 0), pageWidth - 30, y + 10, { align: 'right' });
+            y += 35;
+
+            // Status
+            doc.setTextColor(30, 41, 59);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            const status = currentPayslip.status?.charAt(0).toUpperCase() + currentPayslip.status?.slice(1);
+            doc.text(`Status: ${status}`, pageWidth / 2, y, { align: 'center' });
+            y += 20;
+
+            // Footer
+            doc.setFontSize(8);
+            doc.setTextColor(100, 116, 139);
+            doc.text('This is a computer-generated document. No signature required.', pageWidth / 2, y, { align: 'center' });
+            doc.text(`Generated on: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, y + 6, { align: 'center' });
+
+            // Save the PDF
+            const fileName = `Payslip_${user?.name?.replace(/\s+/g, '_') || 'Employee'}_${currentPayslip.period?.replace(/\s+/g, '_') || 'Period'}.pdf`;
+            doc.save(fileName);
+
+        } catch (err) {
+            console.error('Error generating PDF:', err);
+            alert('Failed to generate PDF. Please try again.');
+        } finally {
+            setDownloading(false);
         }
     };
 
@@ -85,16 +243,16 @@ export default function Payslip() {
 
             {/* Period Navigator */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-                <button 
-                    onClick={() => navigatePayslip(1)} 
+                <button
+                    onClick={() => navigatePayslip(1)}
                     disabled={currentIndex >= payslips.length - 1}
                     style={{ padding: '8px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: currentIndex >= payslips.length - 1 ? 'not-allowed' : 'pointer', opacity: currentIndex >= payslips.length - 1 ? 0.5 : 1 }}
                 >
                     <ChevronLeft size={20} />
                 </button>
                 <span style={{ fontWeight: 600, color: '#1e293b' }}>{currentPayslip?.period || 'No Period'}</span>
-                <button 
-                    onClick={() => navigatePayslip(-1)} 
+                <button
+                    onClick={() => navigatePayslip(-1)}
                     disabled={currentIndex <= 0}
                     style={{ padding: '8px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: currentIndex <= 0 ? 'not-allowed' : 'pointer', opacity: currentIndex <= 0 ? 0.5 : 1 }}
                 >
@@ -190,9 +348,9 @@ export default function Payslip() {
                     </span>
                 </div>
 
-                <button className="download-payslip-btn">
-                    <Download size={18} />
-                    <span>Download Payslip (PDF)</span>
+                <button className="download-payslip-btn" onClick={downloadPayslipPDF} disabled={downloading}>
+                    {downloading ? <Loader2 size={18} className="spin" /> : <Download size={18} />}
+                    <span>{downloading ? 'Generating PDF...' : 'Download Payslip (PDF)'}</span>
                 </button>
             </div>
         </div>
