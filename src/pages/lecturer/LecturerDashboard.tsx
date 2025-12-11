@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, CheckCircle, Timer, CalendarX, Bell, Users, Loader2 } from 'lucide-react';
+import { Clock, CheckCircle, Timer, CalendarX, Bell, Users, Loader2, X, Calendar } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { attendanceAPI, leaveAPI, schedulesAPI, type Attendance, type Leave, type Schedule } from '../../services/api';
 import './LecturerDashboard.css';
@@ -18,6 +18,16 @@ export default function LecturerDashboard() {
     });
     const [todaySchedule, setTodaySchedule] = useState<Schedule | null>(null);
     const [recentAttendance, setRecentAttendance] = useState<Attendance[]>([]);
+
+    // Leave request modal state
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [leaveForm, setLeaveForm] = useState({
+        type: 'vacation',
+        startDate: '',
+        endDate: '',
+        reason: ''
+    });
+    const [leaveSubmitting, setLeaveSubmitting] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -94,6 +104,31 @@ export default function LecturerDashboard() {
             alert(err instanceof Error ? err.message : 'Failed to clock out');
         } finally {
             setClockLoading(false);
+        }
+    };
+
+    const handleLeaveSubmit = async () => {
+        if (!leaveForm.startDate || !leaveForm.endDate || !leaveForm.reason) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        try {
+            setLeaveSubmitting(true);
+            await leaveAPI.create({
+                type: leaveForm.type,
+                startDate: leaveForm.startDate,
+                endDate: leaveForm.endDate,
+                reason: leaveForm.reason
+            });
+            setShowLeaveModal(false);
+            setLeaveForm({ type: 'vacation', startDate: '', endDate: '', reason: '' });
+            alert('Leave request submitted successfully!');
+            await fetchData();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to submit leave request');
+        } finally {
+            setLeaveSubmitting(false);
         }
     };
 
@@ -214,9 +249,83 @@ export default function LecturerDashboard() {
                         </div>
                     </div>
                     <span className="leave-count">{stats.leaveBalance} days</span>
-                    <button className="request-leave-btn">Request Leave</button>
+                    <button className="request-leave-btn" onClick={() => setShowLeaveModal(true)}>Request Leave</button>
                 </div>
             </div>
+
+            {/* Leave Request Modal */}
+            {showLeaveModal && (
+                <div className="modal-overlay" onClick={() => setShowLeaveModal(false)}>
+                    <div className="modal-content leave-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div className="modal-title-group">
+                                <Calendar size={24} className="modal-icon" />
+                                <div>
+                                    <h2>Request Leave</h2>
+                                    <p className="modal-subtitle">Submit a new leave request</p>
+                                </div>
+                            </div>
+                            <button className="close-btn" onClick={() => setShowLeaveModal(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="leave-form">
+                            <div className="form-group">
+                                <label>Leave Type</label>
+                                <select
+                                    value={leaveForm.type}
+                                    onChange={e => setLeaveForm({ ...leaveForm, type: e.target.value })}
+                                >
+                                    <option value="vacation">Vacation Leave</option>
+                                    <option value="sick">Sick Leave</option>
+                                    <option value="emergency">Emergency Leave</option>
+                                    <option value="personal">Personal Leave</option>
+                                </select>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Start Date</label>
+                                    <input
+                                        type="date"
+                                        value={leaveForm.startDate}
+                                        onChange={e => setLeaveForm({ ...leaveForm, startDate: e.target.value })}
+                                        min={new Date().toISOString().split('T')[0]}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>End Date</label>
+                                    <input
+                                        type="date"
+                                        value={leaveForm.endDate}
+                                        onChange={e => setLeaveForm({ ...leaveForm, endDate: e.target.value })}
+                                        min={leaveForm.startDate || new Date().toISOString().split('T')[0]}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Reason</label>
+                                <textarea
+                                    rows={3}
+                                    placeholder="Please provide a reason for your leave request..."
+                                    value={leaveForm.reason}
+                                    onChange={e => setLeaveForm({ ...leaveForm, reason: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="modal-footer">
+                            <button className="cancel-btn" onClick={() => setShowLeaveModal(false)}>Cancel</button>
+                            <button className="submit-btn" onClick={handleLeaveSubmit} disabled={leaveSubmitting}>
+                                {leaveSubmitting ? <Loader2 size={16} className="spin" /> : null}
+                                <span>{leaveSubmitting ? 'Submitting...' : 'Submit Request'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

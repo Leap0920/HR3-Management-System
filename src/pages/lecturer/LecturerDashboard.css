@@ -240,3 +240,126 @@
 .request-leave-btn:hover {
     opacity: 0.9;
 }
+
+/* Leave Modal */
+.leave-modal {
+    max-width: 500px;
+    width: 100%;
+}
+
+.leave-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--input-border);
+}
+
+.leave-modal .modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.leave-modal .modal-icon {
+    color: var(--primary-color);
+}
+
+.leave-modal .modal-title-group h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.leave-modal .modal-subtitle {
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.leave-form {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.leave-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.leave-form .form-group label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.leave-form .form-group select,
+.leave-form .form-group input,
+.leave-form .form-group textarea {
+    padding: 12px 14px;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.leave-form .form-group select:focus,
+.leave-form .form-group input:focus,
+.leave-form .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.leave-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.leave-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.leave-modal .modal-footer {
+    padding: 20px 24px;
+    border-top: 1px solid var(--input-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.leave-modal .cancel-btn {
+    padding: 12px 24px;
+    background-color: white;
+    color: var(--text-muted);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.leave-modal .cancel-btn:hover {
+    background-color: #f8fafc;
+}
+
+.leave-modal .submit-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.leave-modal .submit-btn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.leave-modal .submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
