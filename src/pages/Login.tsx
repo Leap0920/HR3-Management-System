@@ -11,9 +11,9 @@ const DEMO_ACCOUNTS = [
     pass: "SuperAdmin123!",
   },
   { role: "HR Admin:", email: "hradmin@hr3.com", pass: "HRAdmin123!" },
-  { role: "Dean:", email: "dean@hr3.com", pass: "Dean123!" },
-  { role: "Lecturer:", email: "jane@hr3.com", pass: "Lecturer123!" },
-  { role: "Admin Staff:", email: "mary@hr3.com", pass: "AdminStaff123!" },
+  { role: "Dean:", email: "rachel.evans0@hr3.com", pass: "Dean123!" },
+  { role: "Lecturer:", email: "debra.morris1000@hr3.com", pass: "Lecturer123!" },
+  { role: "Admin Staff:", email: "benjamin.young2000@hr3.com", pass: "AdminStaff123!" },
 ];
 
 const roleDashboardMap: Record<string, string> = {
