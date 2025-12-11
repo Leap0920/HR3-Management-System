@@ -271,10 +271,19 @@ const generateLeavesForUser = (userId, count) => {
     return records;
 };
 
-const generatePayrollForUser = (userId, periods) => {
+const generatePayrollForUser = (userId, periods, role = 'adminstaff') => {
     const records = [];
     const today = new Date();
-    const basicSalary = randomInt(20000, 50000);
+
+    // Salary ranges based on role
+    const salaryRanges = {
+        dean: { min: 45000, max: 65000 },
+        lecturer: { min: 30000, max: 45000 },
+        adminstaff: { min: 20000, max: 30000 }
+    };
+
+    const range = salaryRanges[role] || salaryRanges.adminstaff;
+    const basicSalary = randomInt(range.min, range.max);
     const statuses = ['pending', 'processed', 'paid', 'paid'];
 
     for (let i = 0; i < periods; i++) {
@@ -286,7 +295,7 @@ const generatePayrollForUser = (userId, periods) => {
         const period = `${periodDate.toLocaleString('default', { month: 'long' })} ${periodStart}-${periodEnd}, ${periodDate.getFullYear()}`;
 
         const overtimePay = randomInt(0, 5000);
-        const allowances = randomInt(0, 3000);
+        const allowances = role === 'dean' ? randomInt(3000, 8000) : randomInt(0, 3000);
         const grossPay = basicSalary + overtimePay + allowances;
 
         const deductions = {
@@ -522,7 +531,7 @@ const seedStressTest = async () => {
         console.log('💰 Generating payroll records...');
         let allPayroll = [];
         for (const emp of allEmployees) {
-            allPayroll.push(...generatePayrollForUser(emp._id, activeConfig.PAYROLL_PERIODS));
+            allPayroll.push(...generatePayrollForUser(emp._id, activeConfig.PAYROLL_PERIODS, emp.role));
         }
         const payrollCount = await batchInsert(Payroll, allPayroll);
         console.log(`   ✓ ${payrollCount} payroll records\n`);
