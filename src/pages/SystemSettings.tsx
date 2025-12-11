@@ -6,7 +6,6 @@ import './SystemSettings.css';
 export default function SystemSettings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [formData, setFormData] = useState({
         systemName: 'HR3 Management System',
@@ -32,17 +31,9 @@ export default function SystemSettings() {
                 setLoading(true);
                 const data = await settingsAPI.getAll();
                 if (data.settingsObj?.general) {
-                    setFormData(prev => ({
-                        ...prev,
-                        ...data.settingsObj.general,
-                        ...data.settingsObj.attendance,
-                        ...data.settingsObj.notifications,
-                        ...data.settingsObj.security
-                    }));
+                    setFormData(prev => ({ ...prev, ...data.settingsObj.general, ...data.settingsObj.attendance, ...data.settingsObj.notifications, ...data.settingsObj.security }));
                 }
-                setError(null);
             } catch (err) {
-                // Settings might not exist yet, use defaults
                 console.log('Using default settings');
             } finally {
                 setLoading(false);
@@ -59,7 +50,6 @@ export default function SystemSettings() {
     const handleSave = async () => {
         try {
             setSaving(true);
-            setError(null);
             const settings = [
                 { key: 'systemName', value: formData.systemName, category: 'general' },
                 { key: 'organizationName', value: formData.organizationName, category: 'general' },
@@ -80,7 +70,7 @@ export default function SystemSettings() {
             await settingsAPI.bulkUpdate(settings);
             setSuccess(true);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save settings');
+            alert(err instanceof Error ? err.message : 'Failed to save settings');
         } finally {
             setSaving(false);
         }
@@ -107,12 +97,6 @@ export default function SystemSettings() {
                 </button>
             </div>
 
-            {error && (
-                <div style={{ padding: '12px 16px', background: '#fee2e2', color: '#dc2626', borderRadius: '8px', marginBottom: '16px' }}>
-                    {error}
-                </div>
-            )}
-
             {success && (
                 <div style={{ padding: '12px 16px', background: '#dcfce7', color: '#16a34a', borderRadius: '8px', marginBottom: '16px' }}>
                     Settings saved successfully!
@@ -121,10 +105,7 @@ export default function SystemSettings() {
 
             <div className="settings-grid">
                 <div className="settings-card">
-                    <div className="card-title">
-                        <Settings size={18} />
-                        <span>General Settings</span>
-                    </div>
+                    <div className="card-title"><Settings size={18} /><span>General Settings</span></div>
                     <div className="form-group">
                         <label>System Name</label>
                         <input type="text" value={formData.systemName} onChange={(e) => handleChange('systemName', e.target.value)} />
@@ -160,10 +141,7 @@ export default function SystemSettings() {
                 </div>
 
                 <div className="settings-card">
-                    <div className="card-title">
-                        <Clock size={18} />
-                        <span>Work Schedule</span>
-                    </div>
+                    <div className="card-title"><Clock size={18} /><span>Work Schedule</span></div>
                     <div className="form-row">
                         <div className="form-group">
                             <label>Working Days Start</label>
@@ -194,10 +172,7 @@ export default function SystemSettings() {
                 </div>
 
                 <div className="settings-card">
-                    <div className="card-title">
-                        <Bell size={18} />
-                        <span>Notifications</span>
-                    </div>
+                    <div className="card-title"><Bell size={18} /><span>Notifications</span></div>
                     <div className="toggle-group">
                         <div className="toggle-info">
                             <span className="toggle-label">Enable Notifications</span>
@@ -221,10 +196,7 @@ export default function SystemSettings() {
                 </div>
 
                 <div className="settings-card">
-                    <div className="card-title">
-                        <Shield size={18} />
-                        <span>Security & Backup</span>
-                    </div>
+                    <div className="card-title"><Shield size={18} /><span>Security & Backup</span></div>
                     <div className="form-group">
                         <label>Session Timeout (minutes)</label>
                         <input type="text" value={formData.sessionTimeout} onChange={(e) => handleChange('sessionTimeout', e.target.value)} />

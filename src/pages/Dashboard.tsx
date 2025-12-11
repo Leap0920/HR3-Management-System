@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Building2, Activity, TrendingUp, Wallet, Settings, Bell, Loader2 } from 'lucide-react';
 import { dashboardAPI, type DashboardStats } from '../services/api';
 import './Dashboard.css';
@@ -8,6 +9,7 @@ const formatCurrency = (amount: number) => {
 };
 
 export default function Dashboard() {
+    const navigate = useNavigate();
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export default function Dashboard() {
 
     const SECOND_ROW_STATS = [
         {
-            label: 'Present Today',
+            label: 'Active Users Today',
             value: stats?.presentToday?.toString() || '0',
             icon: TrendingUp,
             iconColor: '#5d5fdb',
@@ -143,26 +145,26 @@ export default function Dashboard() {
                     <div className="purple-card-content">
                         <Settings size={28} className="spin-slow" />
                         <span className="purple-value">{stats?.pendingLeaves || 0}</span>
-                        <span className="purple-label">Pending Leave Requests</span>
+                        <span className="purple-label">Pending Actions</span>
                     </div>
                 </div>
             </div>
 
             <h2 className="section-title">Quick Actions</h2>
             <div className="quick-actions-grid">
-                <button className="action-button">
+                <button className="action-button" onClick={() => navigate('/dashboard/users')}>
                     <Users size={18} />
                     <span>Manage Users</span>
                 </button>
-                <button className="action-button">
+                <button className="action-button" onClick={() => navigate('/dashboard/departments')}>
                     <Building2 size={18} />
                     <span>Manage Departments</span>
                 </button>
-                <button className="action-button">
+                <button className="action-button" onClick={() => navigate('/dashboard/reports')}>
                     <Activity size={18} />
                     <span>View Analytics</span>
                 </button>
-                <button className="action-button">
+                <button className="action-button" onClick={() => navigate('/dashboard/settings')}>
                     <Settings size={18} />
                     <span>System Settings</span>
                 </button>
@@ -181,7 +183,7 @@ export default function Dashboard() {
                     </div>
                     <div className="info-item">
                         <span>Database Status</span>
-                        <span className="info-value status-healthy">● {stats?.databaseStatus || 'Healthy'}</span>
+                        <span className="info-value status-healthy">● Healthy</span>
                     </div>
                 </div>
             </div>

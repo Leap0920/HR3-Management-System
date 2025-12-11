@@ -11,20 +11,13 @@ interface UserFormData {
     department: string;
 }
 
-const initialFormData: UserFormData = {
-    name: '',
-    email: '',
-    password: '',
-    role: 'lecturer',
-    department: ''
-};
+const initialFormData: UserFormData = { name: '', email: '', password: '', role: 'lecturer', department: '' };
 
 export default function UserManagement() {
     const [searchTerm, setSearchTerm] = useState('');
     const [users, setUsers] = useState<User[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [formData, setFormData] = useState<UserFormData>(initialFormData);
@@ -39,9 +32,8 @@ export default function UserManagement() {
             ]);
             setUsers(usersData);
             setDepartments(deptsData);
-            setError(null);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load users');
+            console.error('Failed to load users');
         } finally {
             setLoading(false);
         }
@@ -58,13 +50,7 @@ export default function UserManagement() {
     const handleOpenModal = (user?: User) => {
         if (user) {
             setEditingUser(user);
-            setFormData({
-                name: user.name,
-                email: user.email,
-                password: '',
-                role: user.role,
-                department: user.department
-            });
+            setFormData({ name: user.name, email: user.email, password: '', role: user.role, department: user.department });
         } else {
             setEditingUser(null);
             setFormData(initialFormData);
@@ -72,29 +58,19 @@ export default function UserManagement() {
         setShowModal(true);
     };
 
-    const handleCloseModal = () => {
-        setShowModal(false);
-        setEditingUser(null);
-        setFormData(initialFormData);
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             setSubmitting(true);
             if (editingUser) {
-                const updateData: Partial<User & { password?: string }> = {
-                    name: formData.name,
-                    email: formData.email,
-                    role: formData.role as User['role'],
-                    department: formData.department
-                };
+                const updateData: Partial<User & { password?: string }> = { name: formData.name, email: formData.email, role: formData.role as User['role'], department: formData.department };
                 if (formData.password) updateData.password = formData.password;
                 await usersAPI.update(editingUser._id, updateData);
             } else {
                 await usersAPI.create(formData);
             }
-            handleCloseModal();
+            setShowModal(false);
+            setFormData(initialFormData);
             await fetchData();
         } catch (err) {
             alert(err instanceof Error ? err.message : 'Failed to save user');
@@ -114,13 +90,7 @@ export default function UserManagement() {
     };
 
     const getRoleDisplay = (role: string) => {
-        const roleMap: Record<string, string> = {
-            superadmin: 'Super Admin',
-            hradmin: 'HR Admin',
-            dean: 'Dean',
-            lecturer: 'Lecturer',
-            adminstaff: 'Admin Staff'
-        };
+        const roleMap: Record<string, string> = { superadmin: 'Super Admin', hradmin: 'HR Admin', dean: 'Dean', lecturer: 'Lecturer', adminstaff: 'Admin Staff' };
         return roleMap[role] || role;
     };
 
@@ -145,20 +115,9 @@ export default function UserManagement() {
                 </button>
             </div>
 
-            {error && (
-                <div style={{ padding: '12px 16px', background: '#fee2e2', color: '#dc2626', borderRadius: '8px', marginBottom: '16px' }}>
-                    {error}
-                </div>
-            )}
-
             <div className="search-bar">
                 <Search size={20} className="search-icon" />
-                <input
-                    type="text"
-                    placeholder="Search users by name, email, or role..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <input type="text" placeholder="Search users by name, email, or role..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
 
             <div className="table-container">
@@ -180,16 +139,10 @@ export default function UserManagement() {
                                 <td className="email-cell">{user.email}</td>
                                 <td className="role-cell">{getRoleDisplay(user.role)}</td>
                                 <td>{user.department || '-'}</td>
-                                <td>
-                                    <span className="status-badge active">Active</span>
-                                </td>
+                                <td><span className="status-badge active">Active</span></td>
                                 <td className="actions-cell">
-                                    <button className="action-icon edit" onClick={() => handleOpenModal(user)}>
-                                        <Pencil size={16} />
-                                    </button>
-                                    <button className="action-icon delete" onClick={() => handleDelete(user)}>
-                                        <Trash2 size={16} />
-                                    </button>
+                                    <button className="action-icon edit" onClick={() => handleOpenModal(user)}><Pencil size={16} /></button>
+                                    <button className="action-icon delete" onClick={() => handleDelete(user)}><Trash2 size={16} /></button>
                                 </td>
                             </tr>
                         ))}
@@ -198,11 +151,11 @@ export default function UserManagement() {
             </div>
 
             {showModal && (
-                <div className="modal-overlay" onClick={handleCloseModal}>
+                <div className="modal-overlay" onClick={() => setShowModal(false)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2>{editingUser ? 'Edit User' : 'Add New User'}</h2>
-                            <button className="close-btn" onClick={handleCloseModal}><X size={20} /></button>
+                            <button className="close-btn" onClick={() => setShowModal(false)}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
@@ -231,16 +184,12 @@ export default function UserManagement() {
                                 <label>Department</label>
                                 <select value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})}>
                                     <option value="">Select Department</option>
-                                    {departments.map(dept => (
-                                        <option key={dept._id} value={dept.name}>{dept.name}</option>
-                                    ))}
+                                    {departments.map(dept => <option key={dept._id} value={dept.name}>{dept.name}</option>)}
                                 </select>
                             </div>
                             <div className="modal-actions">
-                                <button type="button" className="btn-secondary" onClick={handleCloseModal}>Cancel</button>
-                                <button type="submit" className="btn-primary" disabled={submitting}>
-                                    {submitting ? 'Saving...' : editingUser ? 'Update User' : 'Create User'}
-                                </button>
+                                <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary" disabled={submitting}>{submitting ? 'Saving...' : editingUser ? 'Update User' : 'Create User'}</button>
                             </div>
                         </form>
                     </div>

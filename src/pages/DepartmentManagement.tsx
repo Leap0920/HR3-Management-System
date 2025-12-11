@@ -11,19 +11,12 @@ interface DeptFormData {
     status: string;
 }
 
-const initialFormData: DeptFormData = {
-    name: '',
-    code: '',
-    description: '',
-    headId: '',
-    status: 'active'
-};
+const initialFormData: DeptFormData = { name: '', code: '', description: '', headId: '', status: 'active' };
 
 export default function DepartmentManagement() {
     const [departments, setDepartments] = useState<Department[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [editingDept, setEditingDept] = useState<Department | null>(null);
     const [formData, setFormData] = useState<DeptFormData>(initialFormData);
@@ -38,9 +31,8 @@ export default function DepartmentManagement() {
             ]);
             setDepartments(deptsData);
             setUsers(usersData);
-            setError(null);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load departments');
+            console.error('Failed to load departments');
         } finally {
             setLoading(false);
         }
@@ -51,13 +43,7 @@ export default function DepartmentManagement() {
     const handleOpenModal = (dept?: Department) => {
         if (dept) {
             setEditingDept(dept);
-            setFormData({
-                name: dept.name,
-                code: dept.code,
-                description: dept.description || '',
-                headId: dept.headId?._id || '',
-                status: dept.status
-            });
+            setFormData({ name: dept.name, code: dept.code, description: dept.description || '', headId: dept.headId?._id || '', status: dept.status });
         } else {
             setEditingDept(null);
             setFormData(initialFormData);
@@ -65,29 +51,17 @@ export default function DepartmentManagement() {
         setShowModal(true);
     };
 
-    const handleCloseModal = () => {
-        setShowModal(false);
-        setEditingDept(null);
-        setFormData(initialFormData);
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             setSubmitting(true);
-            const data = {
-                name: formData.name,
-                code: formData.code.toUpperCase(),
-                description: formData.description,
-                headId: formData.headId || undefined,
-                status: formData.status
-            };
+            const data = { name: formData.name, code: formData.code.toUpperCase(), description: formData.description, headId: formData.headId || undefined, status: formData.status };
             if (editingDept) {
                 await departmentsAPI.update(editingDept._id, data);
             } else {
                 await departmentsAPI.create(data);
             }
-            handleCloseModal();
+            setShowModal(false);
             await fetchData();
         } catch (err) {
             alert(err instanceof Error ? err.message : 'Failed to save department');
@@ -106,9 +80,7 @@ export default function DepartmentManagement() {
         }
     };
 
-    const getEmployeeCount = (deptName: string) => {
-        return users.filter(u => u.department === deptName).length;
-    };
+    const getEmployeeCount = (deptName: string) => users.filter(u => u.department === deptName).length;
 
     if (loading) {
         return (
@@ -131,55 +103,33 @@ export default function DepartmentManagement() {
                 </button>
             </div>
 
-            {error && (
-                <div style={{ padding: '12px 16px', background: '#fee2e2', color: '#dc2626', borderRadius: '8px', marginBottom: '16px' }}>
-                    {error}
-                </div>
-            )}
-
             <div className="departments-grid">
                 {departments.map((dept) => (
                     <div key={dept._id} className="department-card">
                         <div className="card-header">
-                            <div className="dept-icon">
-                                <Building2 size={20} />
-                            </div>
+                            <div className="dept-icon"><Building2 size={20} /></div>
                             <div className="card-actions">
-                                <button className="action-icon edit" onClick={() => handleOpenModal(dept)}>
-                                    <Pencil size={16} />
-                                </button>
-                                <button className="action-icon delete" onClick={() => handleDelete(dept)}>
-                                    <Trash2 size={16} />
-                                </button>
+                                <button className="action-icon edit" onClick={() => handleOpenModal(dept)}><Pencil size={16} /></button>
+                                <button className="action-icon delete" onClick={() => handleDelete(dept)}><Trash2 size={16} /></button>
                             </div>
                         </div>
-
                         <h3 className="dept-name">{dept.name}</h3>
                         <p className="dept-code">Code: {dept.code}</p>
-
                         <div className="dept-info">
-                            <div className="info-row">
-                                <Users size={16} />
-                                <span>{getEmployeeCount(dept.name)} Employees</span>
-                            </div>
+                            <div className="info-row"><Users size={16} /><span>{getEmployeeCount(dept.name)} Employees</span></div>
                             <p className="dept-head">Head: {dept.headId?.name || 'Not assigned'}</p>
                         </div>
-
                         <p className="dept-description">{dept.description || 'No description'}</p>
-                        
-                        <span className={`status-badge ${dept.status}`} style={{ marginTop: '12px' }}>
-                            {dept.status.charAt(0).toUpperCase() + dept.status.slice(1)}
-                        </span>
                     </div>
                 ))}
             </div>
 
             {showModal && (
-                <div className="modal-overlay" onClick={handleCloseModal}>
+                <div className="modal-overlay" onClick={() => setShowModal(false)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2>{editingDept ? 'Edit Department' : 'Add New Department'}</h2>
-                            <button className="close-btn" onClick={handleCloseModal}><X size={20} /></button>
+                            <button className="close-btn" onClick={() => setShowModal(false)}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
@@ -211,10 +161,8 @@ export default function DepartmentManagement() {
                                 </select>
                             </div>
                             <div className="modal-actions">
-                                <button type="button" className="btn-secondary" onClick={handleCloseModal}>Cancel</button>
-                                <button type="submit" className="btn-primary" disabled={submitting}>
-                                    {submitting ? 'Saving...' : editingDept ? 'Update' : 'Create'}
-                                </button>
+                                <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary" disabled={submitting}>{submitting ? 'Saving...' : editingDept ? 'Update' : 'Create'}</button>
                             </div>
                         </form>
                     </div>

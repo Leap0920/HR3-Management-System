@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FileText, Download, Calendar, Filter, Loader2 } from 'lucide-react';
-import { attendanceAPI, payrollAPI, leaveAPI, departmentsAPI, type Department } from '../services/api';
+import { attendanceAPI, payrollAPI, leaveAPI, departmentsAPI, schedulesAPI, type Department } from '../services/api';
 import './Reports.css';
 
 interface ReportType {
@@ -9,22 +9,36 @@ interface ReportType {
     description: string;
 }
 
+interface GeneratedReport {
+    id: number;
+    name: string;
+    generatedDate: string;
+    type: string;
+}
+
 const REPORT_TYPES: ReportType[] = [
     { id: 'attendance', name: 'Attendance Summary Report', description: 'Complete attendance records with status and hours' },
     { id: 'payroll', name: 'Payroll Report', description: 'Salary computation breakdown and deductions' },
     { id: 'leave', name: 'Leave Summary Report', description: 'Leave requests and balance overview' },
+    { id: 'schedule', name: 'Employee Schedule Report', description: 'Work schedules and shift assignments' },
+    { id: 'overtime', name: 'Overtime Report', description: 'Overtime hours and compensation' },
     { id: 'department', name: 'Department Summary', description: 'Per-department HR metrics and analytics' },
+];
+
+const GENERATED_REPORTS: GeneratedReport[] = [
+    { id: 1, name: 'Attendance Summary - November 2025', generatedDate: '11/24/2025', type: 'Attendance' },
+    { id: 2, name: 'Payroll Report - November 1-15, 2025', generatedDate: '11/15/2025', type: 'Payroll' },
+    { id: 3, name: 'Leave Summary - Q4 2025', generatedDate: '11/10/2025', type: 'Leave' },
+    { id: 4, name: 'Department Summary - Computer Science', generatedDate: '11/05/2025', type: 'Department' },
 ];
 
 export default function Reports() {
     const [selectedReport, setSelectedReport] = useState('attendance');
-    const [startDate, setStartDate] = useState(new Date(new Date().setDate(1)).toISOString().split('T')[0]);
-    const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+    const [startDate, setStartDate] = useState('2025-11-01');
+    const [endDate, setEndDate] = useState('2025-11-24');
     const [department, setDepartment] = useState('All Departments');
     const [departments, setDepartments] = useState<Department[]>([]);
     const [loading, setLoading] = useState(false);
-    const [reportData, setReportData] = useState<unknown>(null);
-    const [stats, setStats] = useState({ totalReports: 0, thisMonth: 0 });
 
     useEffect(() => {
         const fetchDepartments = async () => {
@@ -53,13 +67,15 @@ export default function Reports() {
                 case 'leave':
                     data = await leaveAPI.getAll();
                     break;
+                case 'schedule':
+                    data = await schedulesAPI.getAll();
+                    break;
                 case 'department':
                     data = await departmentsAPI.getAll();
                     break;
+                default:
+                    data = await attendanceAPI.getAll();
             }
-            
-            setReportData(data);
-            setStats(prev => ({ ...prev, totalReports: prev.totalReports + 1, thisMonth: prev.thisMonth + 1 }));
             
             // Generate downloadable report
             const reportContent = JSON.stringify(data, null, 2);
@@ -110,17 +126,24 @@ export default function Reports() {
                         ))}
                     </div>
 
-                    {reportData && (
-                        <div style={{ marginTop: '24px' }}>
-                            <h2 className="section-title">Report Preview</h2>
-                            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', maxHeight: '300px', overflow: 'auto' }}>
-                                <pre style={{ fontSize: '0.8rem', color: '#475569' }}>
-                                    {JSON.stringify(reportData, null, 2).slice(0, 2000)}
-                                    {JSON.stringify(reportData, null, 2).length > 2000 && '...'}
-                                </pre>
+                    <h2 className="section-title mt-32">Recently Generated Reports</h2>
+                    <div className="recent-reports-list">
+                        {GENERATED_REPORTS.map((report) => (
+                            <div key={report.id} className="recent-report-item">
+                                <div className="report-icon small">
+                                    <FileText size={16} />
+                                </div>
+                                <div className="report-info">
+                                    <span className="report-name">{report.name}</span>
+                                    <span className="report-date">Generated on {report.generatedDate}</span>
+                                </div>
+                                <span className="report-type-badge">{report.type}</span>
+                                <button className="download-icon-btn">
+                                    <Download size={16} />
+                                </button>
                             </div>
-                        </div>
-                    )}
+                        ))}
+                    </div>
                 </div>
 
                 <div className="reports-sidebar">
@@ -169,7 +192,7 @@ export default function Reports() {
 
                         <button className="generate-btn" onClick={generateReport} disabled={loading}>
                             {loading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
-                            <span>{loading ? 'Generating...' : 'Generate Report'}</span>
+                            <span>{loading ? 'Generating...' : 'Generate Report (PDF)'}</span>
                         </button>
                     </div>
 
@@ -177,15 +200,15 @@ export default function Reports() {
                         <h3>Quick Statistics</h3>
                         <div className="stat-row">
                             <span className="stat-name">Total Reports</span>
-                            <span className="stat-val primary">{stats.totalReports}</span>
+                            <span className="stat-val primary">156</span>
                         </div>
                         <div className="stat-row">
-                            <span className="stat-name">This Session</span>
-                            <span className="stat-val">{stats.thisMonth}</span>
+                            <span className="stat-name">This Month</span>
+                            <span className="stat-val">24</span>
                         </div>
                         <div className="stat-row">
                             <span className="stat-name">Last Generated</span>
-                            <span className="stat-val primary">{reportData ? 'Just now' : 'N/A'}</span>
+                            <span className="stat-val primary">Today</span>
                         </div>
                     </div>
                 </div>

@@ -8,10 +8,7 @@ export default function LeaveManagement() {
     const [statusFilter, setStatusFilter] = useState('All Status');
     const [leaves, setLeaves] = useState<Leave[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
-    const [remarksModal, setRemarksModal] = useState<{ id: string; action: 'approved' | 'rejected' } | null>(null);
-    const [remarks, setRemarks] = useState('');
 
     const fetchData = async () => {
         try {
@@ -20,9 +17,8 @@ export default function LeaveManagement() {
             if (statusFilter !== 'All Status') params.status = statusFilter.toLowerCase();
             const data = await leaveAPI.getAll(params);
             setLeaves(data);
-            setError(null);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load leave requests');
+            console.error('Failed to load leave requests');
         } finally {
             setLoading(false);
         }
@@ -43,24 +39,10 @@ export default function LeaveManagement() {
         rejected: leaves.filter(l => l.status === 'rejected').length
     };
 
-    const STATS = [
-        { label: 'Total Requests', value: stats.total.toString(), color: '#1e293b' },
-        { label: 'Pending', value: stats.pending.toString(), color: '#f97316' },
-        { label: 'Approved', value: stats.approved.toString(), color: '#22c55e' },
-        { label: 'Rejected', value: stats.rejected.toString(), color: '#ef4444' },
-    ];
-
     const handleAction = async (id: string, action: 'approved' | 'rejected') => {
-        setRemarksModal({ id, action });
-    };
-
-    const submitAction = async () => {
-        if (!remarksModal) return;
         try {
-            setActionLoading(remarksModal.id);
-            await leaveAPI.updateStatus(remarksModal.id, { status: remarksModal.action, remarks });
-            setRemarksModal(null);
-            setRemarks('');
+            setActionLoading(id);
+            await leaveAPI.updateStatus(id, { status: action });
             await fetchData();
         } catch (err) {
             alert(err instanceof Error ? err.message : 'Failed to update leave status');
@@ -69,20 +51,10 @@ export default function LeaveManagement() {
         }
     };
 
-    const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-    };
+    const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 
     const getLeaveTypeDisplay = (type: string) => {
-        const typeMap: Record<string, string> = {
-            vacation: 'Vacation Leave',
-            sick: 'Sick Leave',
-            personal: 'Personal Leave',
-            maternity: 'Maternity Leave',
-            paternity: 'Paternity Leave',
-            emergency: 'Emergency Leave',
-            other: 'Other'
-        };
+        const typeMap: Record<string, string> = { vacation: 'Vacation Leave', sick: 'Sick Leave', personal: 'Personal Leave', maternity: 'Maternity Leave', paternity: 'Paternity Leave', emergency: 'Emergency Leave', other: 'Other' };
         return typeMap[type] || type;
     };
 
@@ -103,19 +75,23 @@ export default function LeaveManagement() {
                 </div>
             </div>
 
-            {error && (
-                <div style={{ padding: '12px 16px', background: '#fee2e2', color: '#dc2626', borderRadius: '8px', marginBottom: '16px' }}>
-                    {error}
-                </div>
-            )}
-
             <div className="stats-row four-cols">
-                {STATS.map((stat, index) => (
-                    <div key={index} className="stat-mini-card no-border">
-                        <span className="stat-mini-label">{stat.label}</span>
-                        <span className="stat-mini-value" style={{ color: stat.color }}>{stat.value}</span>
-                    </div>
-                ))}
+                <div className="stat-mini-card no-border">
+                    <span className="stat-mini-label">Total Requests</span>
+                    <span className="stat-mini-value" style={{ color: '#1e293b' }}>{stats.total}</span>
+                </div>
+                <div className="stat-mini-card no-border">
+                    <span className="stat-mini-label">Pending</span>
+                    <span className="stat-mini-value" style={{ color: '#f97316' }}>{stats.pending}</span>
+                </div>
+                <div className="stat-mini-card no-border">
+                    <span className="stat-mini-label">Approved</span>
+                    <span className="stat-mini-value" style={{ color: '#22c55e' }}>{stats.approved}</span>
+                </div>
+                <div className="stat-mini-card no-border">
+                    <span className="stat-mini-label">Rejected</span>
+                    <span className="stat-mini-value" style={{ color: '#ef4444' }}>{stats.rejected}</span>
+                </div>
             </div>
 
             <div className="filters-inline">
@@ -167,20 +143,8 @@ export default function LeaveManagement() {
                                 <td className="actions-cell">
                                     {request.status === 'pending' ? (
                                         <>
-                                            <button 
-                                                className="action-icon approve" 
-                                                onClick={() => handleAction(request._id, 'approved')}
-                                                disabled={actionLoading === request._id}
-                                            >
-                                                <Check size={16} />
-                                            </button>
-                                            <button 
-                                                className="action-icon reject" 
-                                                onClick={() => handleAction(request._id, 'rejected')}
-                                                disabled={actionLoading === request._id}
-                                            >
-                                                <X size={16} />
-                                            </button>
+                                            <button className="action-icon approve" onClick={() => handleAction(request._id, 'approved')} disabled={actionLoading === request._id}><Check size={16} /></button>
+                                            <button className="action-icon reject" onClick={() => handleAction(request._id, 'rejected')} disabled={actionLoading === request._id}><X size={16} /></button>
                                         </>
                                     ) : (
                                         <span className="action-text">{request.status}</span>
@@ -191,33 +155,6 @@ export default function LeaveManagement() {
                     </tbody>
                 </table>
             </div>
-
-            {remarksModal && (
-                <div className="modal-overlay" onClick={() => setRemarksModal(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-                        <div className="modal-header">
-                            <h2>{remarksModal.action === 'approved' ? 'Approve' : 'Reject'} Leave Request</h2>
-                            <button className="close-btn" onClick={() => setRemarksModal(null)}><X size={20} /></button>
-                        </div>
-                        <div className="form-group">
-                            <label>Remarks (Optional)</label>
-                            <textarea value={remarks} onChange={e => setRemarks(e.target.value)} rows={3} placeholder="Add any remarks..." />
-                        </div>
-                        <div className="modal-actions">
-                            <button type="button" className="btn-secondary" onClick={() => setRemarksModal(null)}>Cancel</button>
-                            <button 
-                                type="button" 
-                                className="btn-primary" 
-                                onClick={submitAction}
-                                disabled={actionLoading !== null}
-                                style={{ background: remarksModal.action === 'approved' ? '#22c55e' : '#ef4444' }}
-                            >
-                                {actionLoading ? 'Processing...' : remarksModal.action === 'approved' ? 'Approve' : 'Reject'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

@@ -126,7 +126,7 @@ export default function Payslip() {
                         </div>
                         <div className="info-item">
                             <span className="info-label">Position</span>
-                            <span className="info-value">{user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1) || 'N/A'}</span>
+                            <span className="info-value">{user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'N/A'}</span>
                         </div>
                     </div>
                 </div>
