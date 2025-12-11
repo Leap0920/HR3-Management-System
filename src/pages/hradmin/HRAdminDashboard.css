@@ -47,6 +47,10 @@
     }
 }
 
+.analytics-grid.mt-20 {
+    margin-top: 20px;
+}
+
 .chart-card {
     background-color: var(--white);
     border-radius: var(--radius);
