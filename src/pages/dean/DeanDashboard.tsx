@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Bell, Loader2 } from 'lucide-react';
+import { Users, Bell, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { leaveAPI, attendanceAPI, usersAPI, type Leave, type User } from '../../services/api';
 import './DeanDashboard.css';
@@ -15,47 +15,83 @@ export default function DeanDashboard() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [leavesData, usersData, attendanceData] = await Promise.all([
-                leaveAPI.getAll({ status: 'pending' }),
-                usersAPI.getAll().catch(() => [] as User[]),
-                attendanceAPI.getAll().catch(() => [])
-            ]);
+            setError(null);
 
-            // Filter leaves for the dean's department
-            const deptLeaves = user?.department 
-                ? leavesData.filter(l => l.userId?.department === user.department)
+            // Fetch all data with individual error handling
+            let leavesData: Leave[] = [];
+            let usersData: User[] = [];
+            let attendanceData: any[] = [];
+
+            try {
+                leavesData = await leaveAPI.getAll({ status: 'pending' });
+            } catch (err) {
+                console.error('Failed to fetch leaves:', err);
+                leavesData = [];
+            }
+
+            try {
+                usersData = await usersAPI.getAll();
+            } catch (err) {
+                console.error('Failed to fetch users:', err);
+                usersData = [];
+            }
+
+            try {
+                attendanceData = await attendanceAPI.getAll();
+            } catch (err) {
+                console.error('Failed to fetch attendance:', err);
+                attendanceData = [];
+            }
+
+            // Filter leaves for the dean's department with null checks
+            const deptLeaves = user?.department
+                ? leavesData.filter(l => l?.userId?.department === user.department)
                 : leavesData;
-            setPendingLeaves(deptLeaves);
+            setPendingLeaves(deptLeaves || []);
 
-            // Calculate stats
+            // Calculate stats with null checks
             const deptUsers = user?.department
-                ? usersData.filter((u: User) => u.department === user.department && ['lecturer', 'adminstaff'].includes(u.role))
-                : usersData.filter((u: User) => ['lecturer', 'adminstaff'].includes(u.role));
+                ? usersData.filter((u: User) => u?.department === user.department && ['lecturer', 'adminstaff'].includes(u?.role || ''))
+                : usersData.filter((u: User) => ['lecturer', 'adminstaff'].includes(u?.role || ''));
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const todayStr = today.toISOString().split('T')[0];
 
-            const todayAttendance = attendanceData.filter(a => {
-                const attDate = new Date(a.date).toISOString().split('T')[0];
-                return attDate === todayStr && ['present', 'late'].includes(a.status);
-            });
+            const todayAttendance = Array.isArray(attendanceData)
+                ? attendanceData.filter(a => {
+                    if (!a?.date) return false;
+                    try {
+                        const attDate = new Date(a.date).toISOString().split('T')[0];
+                        return attDate === todayStr && ['present', 'late'].includes(a?.status || '');
+                    } catch {
+                        return false;
+                    }
+                })
+                : [];
 
-            const onLeaveCount = leavesData.filter(l => {
-                const start = new Date(l.startDate);
-                const end = new Date(l.endDate);
-                return l.status === 'approved' && today >= start && today <= end;
-            }).length;
+            const onLeaveCount = Array.isArray(leavesData)
+                ? leavesData.filter(l => {
+                    if (!l?.startDate || !l?.endDate) return false;
+                    try {
+                        const start = new Date(l.startDate);
+                        const end = new Date(l.endDate);
+                        return l.status === 'approved' && today >= start && today <= end;
+                    } catch {
+                        return false;
+                    }
+                }).length
+                : 0;
 
             setStats({
-                totalFaculty: deptUsers.length,
-                presentToday: todayAttendance.length,
-                pendingRequests: deptLeaves.length,
-                onLeave: onLeaveCount
+                totalFaculty: deptUsers?.length || 0,
+                presentToday: todayAttendance?.length || 0,
+                pendingRequests: deptLeaves?.length || 0,
+                onLeave: onLeaveCount || 0
             });
 
-            setError(null);
         } catch (err) {
+            console.error('Dashboard fetch error:', err);
             setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
         } finally {
             setLoading(false);
@@ -63,10 +99,13 @@ export default function DeanDashboard() {
     };
 
     useEffect(() => {
-        fetchData();
+        if (user) {
+            fetchData();
+        }
     }, [user]);
 
     const handleApprove = async (leaveId: string) => {
+        if (!leaveId) return;
         try {
             setActionLoading(leaveId);
             await leaveAPI.updateStatus(leaveId, { status: 'approved' });
@@ -79,6 +118,7 @@ export default function DeanDashboard() {
     };
 
     const handleReject = async (leaveId: string) => {
+        if (!leaveId) return;
         try {
             setActionLoading(leaveId);
             await leaveAPI.updateStatus(leaveId, { status: 'rejected' });
@@ -90,14 +130,25 @@ export default function DeanDashboard() {
         }
     };
 
-    const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+    const formatDate = (dateStr: string | null | undefined) => {
+        if (!dateStr) return 'N/A';
+        try {
+            return new Date(dateStr).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+        } catch {
+            return 'Invalid Date';
+        }
     };
 
-    const calculateDays = (start: string, end: string) => {
-        const startDate = new Date(start);
-        const endDate = new Date(end);
-        return Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const calculateDays = (start: string | null | undefined, end: string | null | undefined) => {
+        if (!start || !end) return 0;
+        try {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return 0;
+            return Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+        } catch {
+            return 0;
+        }
     };
 
     if (loading) {
@@ -111,8 +162,14 @@ export default function DeanDashboard() {
     if (error) {
         return (
             <div className="page-content dean-dashboard">
-                <div style={{ padding: '20px', background: '#fee2e2', borderRadius: '8px', color: '#dc2626' }}>
-                    Error: {error}
+                <div className="error-container">
+                    <div className="error-message">
+                        <strong>Error:</strong> {error}
+                    </div>
+                    <button className="retry-btn" onClick={fetchData}>
+                        <RefreshCw size={16} />
+                        <span>Retry</span>
+                    </button>
                 </div>
             </div>
         );
@@ -133,6 +190,9 @@ export default function DeanDashboard() {
                     <p className="page-subtitle">{user?.department || 'Department'} Overview</p>
                 </div>
                 <div className="header-actions">
+                    <button className="icon-btn" onClick={fetchData} title="Refresh data">
+                        <RefreshCw size={20} />
+                    </button>
                     <button className="icon-btn">
                         <Bell size={20} />
                     </button>
@@ -162,27 +222,30 @@ export default function DeanDashboard() {
             <div className="pending-section">
                 <h2 className="section-title">Pending Leave Requests</h2>
                 <div className="pending-list">
-                    {pendingLeaves.length > 0 ? (
+                    {pendingLeaves && pendingLeaves.length > 0 ? (
                         pendingLeaves.map((request) => (
-                            <div key={request._id} className="pending-item">
+                            <div key={request._id || Math.random()} className="pending-item">
                                 <div className="request-info">
-                                    <span className="request-name">{request.userId?.name || 'Unknown'}</span>
+                                    <span className="request-name">{request?.userId?.name || 'Unknown Employee'}</span>
                                     <span className="request-details">
-                                        {request.type.charAt(0).toUpperCase() + request.type.slice(1)} Leave - {formatDate(request.startDate)} to {formatDate(request.endDate)} ({calculateDays(request.startDate, request.endDate)} days)
+                                        {(request?.type || 'Leave').charAt(0).toUpperCase() + (request?.type || 'leave').slice(1)} Leave - {formatDate(request?.startDate)} to {formatDate(request?.endDate)} ({calculateDays(request?.startDate, request?.endDate)} days)
                                     </span>
+                                    {request?.reason && (
+                                        <span className="request-reason">Reason: {request.reason}</span>
+                                    )}
                                 </div>
                                 <div className="request-actions">
-                                    <button 
+                                    <button
                                         className="approve-btn"
                                         onClick={() => handleApprove(request._id)}
-                                        disabled={actionLoading === request._id}
+                                        disabled={actionLoading === request._id || !request._id}
                                     >
                                         {actionLoading === request._id ? 'Processing...' : 'Approve'}
                                     </button>
-                                    <button 
+                                    <button
                                         className="reject-btn"
                                         onClick={() => handleReject(request._id)}
-                                        disabled={actionLoading === request._id}
+                                        disabled={actionLoading === request._id || !request._id}
                                     >
                                         Reject
                                     </button>
@@ -190,8 +253,10 @@ export default function DeanDashboard() {
                             </div>
                         ))
                     ) : (
-                        <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
-                            No pending leave requests
+                        <div className="empty-state">
+                            <span className="empty-icon">📋</span>
+                            <span className="empty-text">No pending leave requests</span>
+                            <span className="empty-subtext">All caught up! New requests will appear here.</span>
                         </div>
                     )}
                 </div>

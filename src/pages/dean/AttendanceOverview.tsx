@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Download } from 'lucide-react';
+import { Loader2, Download, RefreshCw } from 'lucide-react';
 import { attendanceAPI, usersAPI, type Attendance, type User } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import './AttendanceOverview.css';
@@ -7,6 +7,7 @@ import './AttendanceOverview.css';
 interface FacultyStats {
     userId: string;
     name: string;
+    department: string;
     totalHours: number;
     lateCount: number;
     absentCount: number;
@@ -20,53 +21,94 @@ export default function AttendanceOverview() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            let attendanceData: Attendance[] = [];
+            let usersData: User[] = [];
+
             try {
-                setLoading(true);
-                const [attendanceData, usersData] = await Promise.all([
-                    attendanceAPI.getAll(),
-                    usersAPI.getAll().catch(() => [] as User[])
-                ]);
+                attendanceData = await attendanceAPI.getAll();
+            } catch (err) {
+                console.error('Failed to fetch attendance:', err);
+                attendanceData = [];
+            }
 
-                // Filter users by department
-                const deptUsers = user?.department
-                    ? usersData.filter(u => u.department === user.department && ['lecturer', 'adminstaff'].includes(u.role))
-                    : usersData.filter(u => ['lecturer', 'adminstaff'].includes(u.role));
+            try {
+                usersData = await usersAPI.getAll();
+            } catch (err) {
+                console.error('Failed to fetch users:', err);
+                usersData = [];
+            }
 
-                // Calculate stats for each faculty
-                const stats: FacultyStats[] = deptUsers.map(faculty => {
-                    const userAttendance = attendanceData.filter(a => 
-                        (typeof a.userId === 'object' ? a.userId._id : a.userId) === faculty._id
-                    );
-                    
-                    const totalHours = userAttendance.reduce((sum, a) => sum + (a.hoursWorked || 0), 0);
-                    const lateCount = userAttendance.filter(a => a.status === 'late').length;
-                    const absentCount = userAttendance.filter(a => a.status === 'absent').length;
-                    const presentCount = userAttendance.filter(a => ['present', 'late'].includes(a.status)).length;
-                    const totalRecords = userAttendance.length;
-                    const attendanceRate = totalRecords > 0 ? (presentCount / totalRecords) * 100 : 0;
+            console.log('Dean department:', user?.department);
+            console.log('All users count:', usersData.length);
+            console.log('All attendance count:', attendanceData.length);
 
-                    return {
-                        userId: faculty._id,
-                        name: faculty.name,
-                        totalHours,
-                        lateCount,
-                        absentCount,
-                        presentCount,
-                        attendanceRate
-                    };
+            // Get all faculty/staff users - flexible department matching
+            let deptUsers: User[] = [];
+            if (user?.department) {
+                deptUsers = usersData.filter(u => {
+                    const userDept = (u.department || '').toLowerCase().trim();
+                    const deanDept = (user.department || '').toLowerCase().trim();
+                    const isMatchingDept = userDept === deanDept || userDept.includes(deanDept) || deanDept.includes(userDept);
+                    const isValidRole = ['lecturer', 'adminstaff'].includes(u.role || '');
+                    return isMatchingDept && isValidRole;
                 });
 
-                setFacultyStats(stats);
-                setError(null);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to load attendance data');
-            } finally {
-                setLoading(false);
+                // Fallback: show all faculty if no matches
+                if (deptUsers.length === 0) {
+                    console.log('No faculty found for department, showing all faculty');
+                    deptUsers = usersData.filter(u => ['lecturer', 'adminstaff'].includes(u.role || ''));
+                }
+            } else {
+                deptUsers = usersData.filter(u => ['lecturer', 'adminstaff'].includes(u.role || ''));
             }
-        };
-        fetchData();
+
+            console.log('Filtered faculty count:', deptUsers.length);
+
+            // Calculate stats for each faculty
+            const stats: FacultyStats[] = deptUsers.map(faculty => {
+                const userAttendance = attendanceData.filter(a => {
+                    const attUserId = typeof a.userId === 'object' ? a.userId?._id : a.userId;
+                    return attUserId === faculty._id;
+                });
+
+                const totalHours = userAttendance.reduce((sum, a) => sum + (a.hoursWorked || 0), 0);
+                const lateCount = userAttendance.filter(a => a.status === 'late').length;
+                const absentCount = userAttendance.filter(a => a.status === 'absent').length;
+                const presentCount = userAttendance.filter(a => ['present', 'late'].includes(a.status || '')).length;
+                const totalRecords = userAttendance.length;
+                const attendanceRate = totalRecords > 0 ? (presentCount / totalRecords) * 100 : 0;
+
+                return {
+                    userId: faculty._id,
+                    name: faculty.name || 'Unknown',
+                    department: faculty.department || 'No Department',
+                    totalHours,
+                    lateCount,
+                    absentCount,
+                    presentCount,
+                    attendanceRate
+                };
+            });
+
+            console.log('Faculty stats:', stats);
+            setFacultyStats(stats);
+        } catch (err) {
+            console.error('AttendanceOverview error:', err);
+            setError(err instanceof Error ? err.message : 'Failed to load attendance data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (user) {
+            fetchData();
+        }
     }, [user]);
 
     if (loading) {
@@ -84,10 +126,16 @@ export default function AttendanceOverview() {
                     <h1 className="page-title">Attendance Overview</h1>
                     <p className="page-subtitle">Monitor faculty attendance and hours - {user?.department || 'All Departments'}</p>
                 </div>
-                <button className="primary-btn" style={{ background: '#64748b' }}>
-                    <Download size={18} />
-                    <span>Export Report</span>
-                </button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button className="primary-btn" onClick={fetchData} style={{ background: '#64748b' }}>
+                        <RefreshCw size={18} />
+                        <span>Refresh</span>
+                    </button>
+                    <button className="primary-btn" style={{ background: '#5d5fdb' }}>
+                        <Download size={18} />
+                        <span>Export Report</span>
+                    </button>
+                </div>
             </div>
 
             {error && (
@@ -127,6 +175,7 @@ export default function AttendanceOverview() {
                     <thead>
                         <tr>
                             <th>Faculty</th>
+                            <th>Department</th>
                             <th>Total Hours</th>
                             <th>Present Days</th>
                             <th>Late Count</th>
@@ -138,12 +187,13 @@ export default function AttendanceOverview() {
                         {facultyStats.length > 0 ? facultyStats.map((record) => (
                             <tr key={record.userId}>
                                 <td className="faculty-name">{record.name}</td>
+                                <td style={{ color: '#64748b' }}>{record.department}</td>
                                 <td>{record.totalHours.toFixed(1)} hrs</td>
-                                <td style={{ color: '#22c55e' }}>{record.presentCount}</td>
+                                <td style={{ color: '#22c55e', fontWeight: 500 }}>{record.presentCount}</td>
                                 <td className="late-count">{record.lateCount}</td>
                                 <td className="absent-count">{record.absentCount}</td>
                                 <td className="rate-cell">
-                                    <span style={{ 
+                                    <span style={{
                                         color: record.attendanceRate >= 90 ? '#22c55e' : record.attendanceRate >= 75 ? '#f97316' : '#ef4444',
                                         fontWeight: 600
                                     }}>
@@ -152,7 +202,13 @@ export default function AttendanceOverview() {
                                 </td>
                             </tr>
                         )) : (
-                            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>No faculty data found</td></tr>
+                            <tr>
+                                <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                                    <p style={{ fontSize: '2rem', margin: '0 0 8px' }}>📊</p>
+                                    <p style={{ margin: 0, fontWeight: 500 }}>No faculty attendance data found</p>
+                                    <p style={{ margin: '8px 0 0', fontSize: '0.9rem' }}>Attendance records will appear here once faculty clock in.</p>
+                                </td>
+                            </tr>
                         )}
                     </tbody>
                 </table>
