@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Calendar, Users, Search, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { schedulesAPI, usersAPI, type Schedule, type User } from '../services/api';
 import './ShiftSchedule.css';
@@ -6,7 +6,21 @@ import './ShiftSchedule.css';
 type ViewType = 'calendar' | 'list';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const HOURS = ['6am', '7am', '8am', '9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm', '5pm', '6pm'];
+const HOURS = ['6am', '7am', '8am', '9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm', '8pm'];
+
+// Convert hour string to 24h number
+const hourToNumber = (hour: string): number => {
+    const num = parseInt(hour);
+    if (hour.includes('pm') && num !== 12) return num + 12;
+    if (hour.includes('am') && num === 12) return 0;
+    return num;
+};
+
+// Convert 24h time string to hour index
+const timeToHourIndex = (time: string): number => {
+    const hour = parseInt(time.split(':')[0]);
+    return hour - 6; // 6am is index 0
+};
 
 export default function ShiftSchedule() {
     const [activeView, setActiveView] = useState<ViewType>('calendar');
@@ -46,15 +60,31 @@ export default function ShiftSchedule() {
         return `${days.map(d => d.charAt(0).toUpperCase() + d.slice(1, 3)).join('/')} ${times?.startTime || ''}-${times?.endTime || ''}`;
     };
 
-    const getCalendarSchedule = (day: string, hour: string) => {
-        const dayLower = day.toLowerCase();
-        return schedules.find(s => {
-            if (s.dayOfWeek !== dayLower) return false;
+    // Group schedules by day for calendar view
+    const schedulesByDay = useMemo(() => {
+        const grouped: { [day: string]: Schedule[] } = {};
+        DAYS.forEach(day => {
+            grouped[day.toLowerCase()] = schedules.filter(s => s.dayOfWeek === day.toLowerCase());
+        });
+        return grouped;
+    }, [schedules]);
+
+    // Check if an hour falls within a shift
+    const isHourInShift = (day: string, hourStr: string) => {
+        const daySchedules = schedulesByDay[day.toLowerCase()] || [];
+        const currentHour = hourToNumber(hourStr);
+
+        return daySchedules.some(s => {
             const startHour = parseInt(s.startTime.split(':')[0]);
             const endHour = parseInt(s.endTime.split(':')[0]);
-            const currentHour = hour.includes('pm') && !hour.includes('12') ? parseInt(hour) + 12 : parseInt(hour);
             return currentHour >= startHour && currentHour < endHour;
         });
+    };
+
+    // Get the first schedule for a day (for displaying the shift card)
+    const getFirstScheduleForDay = (day: string) => {
+        const daySchedules = schedulesByDay[day.toLowerCase()] || [];
+        return daySchedules[0];
     };
 
     if (loading) {
@@ -96,24 +126,44 @@ export default function ShiftSchedule() {
                             <div className="header-cell"></div>
                             {HOURS.map((hour) => <div key={hour} className="time-cell">{hour}</div>)}
                         </div>
-                        {DAYS.map((day) => (
-                            <div key={day} className="day-column">
-                                <div className={`header-cell ${day === 'Friday' ? 'friday' : ''}`}>{day}</div>
-                                {HOURS.map((hour) => {
-                                    const schedule = getCalendarSchedule(day, hour);
-                                    return (
-                                        <div key={`${day}-${hour}`} className={`schedule-cell ${schedule ? 'has-shift' : ''}`}>
-                                            {schedule && hour === '8am' && (
-                                                <div className="shift-info">
-                                                    <span className="shift-time">{schedule.startTime} - {schedule.endTime}</span>
-                                                    <span className="shift-employee">{typeof schedule.userId === 'object' ? schedule.userId.name : ''}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ))}
+                        {DAYS.map((day) => {
+                            const schedule = getFirstScheduleForDay(day);
+                            const startIndex = schedule ? timeToHourIndex(schedule.startTime) : -1;
+                            const endIndex = schedule ? timeToHourIndex(schedule.endTime) : -1;
+                            const shiftHeight = schedule ? (endIndex - startIndex) * 50 : 0;
+
+                            return (
+                                <div key={day} className="day-column">
+                                    <div className={`header-cell ${day === 'Friday' ? 'friday' : ''}`}>{day}</div>
+                                    <div className="day-cells">
+                                        {HOURS.map((hour, hourIndex) => {
+                                            const hasShift = isHourInShift(day, hour);
+                                            return (
+                                                <div
+                                                    key={`${day}-${hour}`}
+                                                    className={`schedule-cell ${hasShift ? 'has-shift' : ''}`}
+                                                />
+                                            );
+                                        })}
+                                        {schedule && startIndex >= 0 && (
+                                            <div
+                                                className="shift-card"
+                                                style={{
+                                                    top: `${startIndex * 50}px`,
+                                                    height: `${shiftHeight - 8}px`
+                                                }}
+                                            >
+                                                <span className="shift-time">{schedule.startTime} – {schedule.endTime}</span>
+                                                <span className="shift-location">Office</span>
+                                                <span className="shift-employee">
+                                                    {typeof schedule.userId === 'object' ? schedule.userId.name : ''}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             ) : (

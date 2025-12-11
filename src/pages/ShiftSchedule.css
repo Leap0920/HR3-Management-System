@@ -57,6 +57,7 @@
 
 .day-column {
     border-right: 1px solid var(--input-border);
+    position: relative;
 }
 
 .day-column:last-child {
@@ -87,42 +88,50 @@
     border-bottom: 1px solid var(--input-border);
 }
 
-.schedule-cell {
-    height: 50px;
-    border-bottom: 1px solid var(--input-border);
+.day-cells {
     position: relative;
 }
 
-.schedule-cell.has-shift {
-    background-color: #dcfce7;
+.schedule-cell {
+    height: 50px;
+    border-bottom: 1px solid var(--input-border);
 }
 
-.shift-info {
+.schedule-cell.has-shift {
+    background-color: #d4edda;
+}
+
+/* Shift Card - Positioned absolutely to span multiple rows */
+.shift-card {
     position: absolute;
-    top: 4px;
-    left: 4px;
-    right: 4px;
-    padding: 6px 8px;
-    background-color: #bbf7d0;
-    border-radius: 4px;
-    font-size: 0.75rem;
+    left: 8px;
+    right: 8px;
+    padding: 12px;
+    background-color: #a8d5ba;
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .shift-time {
     font-weight: 600;
-    color: var(--text-main);
+    color: #1a1a2e;
+    font-size: 0.9rem;
 }
 
 .shift-location {
-    color: var(--text-muted);
+    color: #374151;
+    font-size: 0.85rem;
+    font-weight: 500;
 }
 
 .shift-employee {
-    color: var(--text-muted);
-    font-size: 0.7rem;
+    color: #6b7280;
+    font-size: 0.8rem;
+    margin-top: 2px;
 }
 
 /* Employee List Styles */
