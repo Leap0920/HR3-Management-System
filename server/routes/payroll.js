@@ -1,6 +1,7 @@
 const express = require('express');
 const Payroll = require('../models/Payroll');
 const User = require('../models/User');
+const Attendance = require('../models/Attendance');
 const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -176,17 +177,43 @@ router.post('/generate', authorize('superadmin', 'hradmin'), async (req, res) =>
         const users = await User.find({ role: { $in: ['lecturer', 'adminstaff'] } });
 
         const payrolls = [];
+
+        // Tardiness rate: ₱50 per 30 minutes of late/undertime
+        const TARDINESS_RATE_PER_30_MIN = 50;
+
         for (const user of users) {
             // Check if payroll already exists for this period
             const exists = await Payroll.findOne({ userId: user._id, period });
             if (!exists) {
+                // Fetch attendance records for this user (last 30 days as default period)
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+                const attendanceRecords = await Attendance.find({
+                    userId: user._id,
+                    date: { $gte: thirtyDaysAgo }
+                });
+
+                // Calculate total tardiness (late + undertime) in minutes
+                let totalLateMinutes = 0;
+                let totalUndertimeMinutes = 0;
+
+                for (const record of attendanceRecords) {
+                    totalLateMinutes += record.lateMinutes || 0;
+                    totalUndertimeMinutes += record.undertimeMinutes || 0;
+                }
+
+                const totalTardinessMinutes = totalLateMinutes + totalUndertimeMinutes;
+                // Calculate deduction: ₱50 per 30 minutes
+                const tardinessDeduction = Math.floor(totalTardinessMinutes / 30) * TARDINESS_RATE_PER_30_MIN;
+
                 const grossPay = basicSalary;
                 const deductions = {
                     sss: basicSalary * 0.045,
                     philhealth: basicSalary * 0.02,
                     pagibig: 100,
                     tax: basicSalary * 0.1,
-                    tardiness: 0,
+                    tardiness: tardinessDeduction,
                     other: 0
                 };
                 const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calculator, Eye, Calendar, Loader2, X, Users, DollarSign, Clock } from 'lucide-react';
+import { Calculator, Eye, Calendar, Loader2, X, Users, DollarSign } from 'lucide-react';
 import { payrollAPI, usersAPI, type Payroll as PayrollType, type User } from '../services/api';
 import './Payroll.css';
 
@@ -197,6 +197,7 @@ export default function Payroll() {
                             <p><strong>PhilHealth:</strong> {formatCurrency(showViewModal.deductions.philhealth)}</p>
                             <p><strong>Pag-IBIG:</strong> {formatCurrency(showViewModal.deductions.pagibig)}</p>
                             <p><strong>Tax:</strong> {formatCurrency(showViewModal.deductions.tax)}</p>
+                            <p><strong>Tardiness (Late + Undertime):</strong> {formatCurrency(showViewModal.deductions.tardiness)}</p>
                             <p style={{ color: '#ef4444' }}><strong>Total Deductions:</strong> {formatCurrency(showViewModal.totalDeductions)}</p>
                             <hr style={{ margin: '16px 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
                             <p style={{ fontSize: '1.2rem', color: '#5d5fdb' }}><strong>Net Pay:</strong> {formatCurrency(showViewModal.netPay)}</p>

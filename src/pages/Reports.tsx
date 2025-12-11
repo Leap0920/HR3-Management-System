@@ -27,12 +27,15 @@ const REPORT_TYPES: ReportType[] = [
     { id: 'department', name: 'Department Summary', description: 'Per-department HR metrics and analytics' },
 ];
 
-const GENERATED_REPORTS: GeneratedReport[] = [
-    { id: 1, name: 'Attendance Summary - November 2025', generatedDate: '11/24/2025', type: 'Attendance' },
-    { id: 2, name: 'Payroll Report - November 1-15, 2025', generatedDate: '11/15/2025', type: 'Payroll' },
-    { id: 3, name: 'Leave Summary - Q4 2025', generatedDate: '11/10/2025', type: 'Leave' },
-    { id: 4, name: 'Department Summary - Computer Science', generatedDate: '11/05/2025', type: 'Department' },
-];
+// Initial reports will be populated from localStorage or empty
+const getStoredReports = (): GeneratedReport[] => {
+    try {
+        const stored = localStorage.getItem('generatedReports');
+        return stored ? JSON.parse(stored) : [];
+    } catch {
+        return [];
+    }
+};
 
 const formatCurrency = (amount: number) => {
     return '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -49,6 +52,7 @@ export default function Reports() {
     const [department, setDepartment] = useState('All Departments');
     const [departments, setDepartments] = useState<Department[]>([]);
     const [loading, setLoading] = useState(false);
+    const [recentlyGeneratedReports, setRecentlyGeneratedReports] = useState<GeneratedReport[]>(getStoredReports);
 
     useEffect(() => {
         const fetchDepartments = async () => {
@@ -232,6 +236,17 @@ export default function Reports() {
             // Save PDF
             doc.save(`${selectedReport}-report-${new Date().toISOString().split('T')[0]}.pdf`);
 
+            // Add to recently generated reports
+            const newReport: GeneratedReport = {
+                id: Date.now(),
+                name: `${reportTypeName} - ${new Date().toLocaleDateString('en-PH')}`,
+                generatedDate: new Date().toLocaleDateString('en-US'),
+                type: reportTypeName.split(' ')[0]
+            };
+            const updatedReports = [newReport, ...recentlyGeneratedReports].slice(0, 10);
+            setRecentlyGeneratedReports(updatedReports);
+            localStorage.setItem('generatedReports', JSON.stringify(updatedReports));
+
         } catch (err) {
             alert(err instanceof Error ? err.message : 'Failed to generate report');
         } finally {
@@ -271,21 +286,35 @@ export default function Reports() {
 
                     <h2 className="section-title mt-32">Recently Generated Reports</h2>
                     <div className="recent-reports-list">
-                        {GENERATED_REPORTS.map((report) => (
-                            <div key={report.id} className="recent-report-item">
-                                <div className="report-icon small">
-                                    <FileText size={16} />
-                                </div>
-                                <div className="report-info">
-                                    <span className="report-name">{report.name}</span>
-                                    <span className="report-date">Generated on {report.generatedDate}</span>
-                                </div>
-                                <span className="report-type-badge">{report.type}</span>
-                                <button className="download-icon-btn">
-                                    <Download size={16} />
-                                </button>
+                        {recentlyGeneratedReports.length === 0 ? (
+                            <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
+                                No reports generated yet. Generate a report above.
                             </div>
-                        ))}
+                        ) : (
+                            recentlyGeneratedReports.map((report) => (
+                                <div key={report.id} className="recent-report-item">
+                                    <div className="report-icon small">
+                                        <FileText size={16} />
+                                    </div>
+                                    <div className="report-info">
+                                        <span className="report-name">{report.name}</span>
+                                        <span className="report-date">Generated on {report.generatedDate}</span>
+                                    </div>
+                                    <span className="report-type-badge">{report.type}</span>
+                                    <button
+                                        className="download-icon-btn"
+                                        onClick={() => {
+                                            const reportTypeId = report.type.toLowerCase();
+                                            setSelectedReport(reportTypeId);
+                                            setTimeout(() => generateReport(), 100);
+                                        }}
+                                        title="Regenerate and download"
+                                    >
+                                        <Download size={16} />
+                                    </button>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
 

@@ -57,7 +57,7 @@ export default function DepartmentManagement() {
             setSubmitting(true);
             const data = { name: formData.name, code: formData.code.toUpperCase(), description: formData.description, headId: formData.headId || undefined, status: formData.status };
             if (editingDept) {
-                await departmentsAPI.update(editingDept._id, data);
+                await departmentsAPI.update(editingDept._id, data as any);
             } else {
                 await departmentsAPI.create(data);
             }
@@ -134,19 +134,19 @@ export default function DepartmentManagement() {
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
                                 <label>Department Name</label>
-                                <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+                                <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
                             </div>
                             <div className="form-group">
                                 <label>Department Code</label>
-                                <input type="text" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} required placeholder="e.g., CS, ENG, BUS" />
+                                <input type="text" value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} required placeholder="e.g., CS, ENG, BUS" />
                             </div>
                             <div className="form-group">
                                 <label>Description</label>
-                                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} />
+                                <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} />
                             </div>
                             <div className="form-group">
                                 <label>Department Head</label>
-                                <select value={formData.headId} onChange={e => setFormData({...formData, headId: e.target.value})}>
+                                <select value={formData.headId} onChange={e => setFormData({ ...formData, headId: e.target.value })}>
                                     <option value="">Select Head</option>
                                     {users.filter(u => ['dean', 'hradmin', 'superadmin'].includes(u.role)).map(user => (
                                         <option key={user._id} value={user._id}>{user.name} ({user.role})</option>
@@ -155,7 +155,7 @@ export default function DepartmentManagement() {
                             </div>
                             <div className="form-group">
                                 <label>Status</label>
-                                <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                                <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
                                 </select>

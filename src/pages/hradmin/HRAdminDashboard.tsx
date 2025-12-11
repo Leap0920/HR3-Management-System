@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, UserCheck, CalendarX, Wallet, TrendingUp, Clock, FileText, Bell, Loader2 } from 'lucide-react';
-import { dashboardAPI, attendanceAPI, leaveAPI, payrollAPI, type DashboardStats, type Attendance } from '../../services/api';
+import { dashboardAPI, attendanceAPI, payrollAPI, type DashboardStats, type Attendance } from '../../services/api';
 import './HRAdminDashboard.css';
 
 const formatCurrency = (amount: number) => {

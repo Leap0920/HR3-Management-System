@@ -87,10 +87,16 @@ router.post('/clock-in', async (req, res) => {
             attendance.timeIn = new Date();
         }
 
-        // Check if late (after 9:00 AM)
+        // Check if late (after 9:00 AM) and calculate late minutes
         const now = new Date();
-        if (now.getHours() >= 9) {
+        const nineAM = new Date(today);
+        nineAM.setHours(9, 0, 0, 0);
+
+        if (now > nineAM) {
             attendance.status = 'late';
+            // Calculate minutes late
+            const lateMs = now.getTime() - nineAM.getTime();
+            attendance.lateMinutes = Math.floor(lateMs / (1000 * 60));
         }
 
         await attendance.save();
@@ -131,9 +137,13 @@ router.post('/clock-out', async (req, res) => {
         const hoursWorked = (attendance.timeOut - attendance.timeIn) / (1000 * 60 * 60);
         attendance.hoursWorked = Math.round(hoursWorked * 100) / 100;
 
-        // Calculate overtime (over 8 hours)
+        // Calculate overtime (over 8 hours) or undertime (under 8 hours)
         if (hoursWorked > 8) {
             attendance.overtime = Math.round((hoursWorked - 8) * 100) / 100;
+        } else if (hoursWorked < 8) {
+            // Calculate undertime in minutes
+            const undertimeHours = 8 - hoursWorked;
+            attendance.undertimeMinutes = Math.round(undertimeHours * 60);
         }
 
         await attendance.save();
