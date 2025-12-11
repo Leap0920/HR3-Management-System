@@ -19,7 +19,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = 'http://localhost:5000/api';
+// Use relative URL so it goes through Vite proxy (works with ngrok too)
+const API_URL = '/api';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
@@ -34,7 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 try {
                     const response = await fetch(`${API_URL}/auth/me`, {
                         headers: {
-                            'Authorization': `Bearer ${storedToken}`
+                            'Authorization': `Bearer ${storedToken}`,
+                            'ngrok-skip-browser-warning': 'true'
                         }
                     });
                     if (response.ok) {
@@ -65,7 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
                 },
                 body: JSON.stringify({ email, password })
             });

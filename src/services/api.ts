@@ -1,31 +1,42 @@
 // API Service Layer - Connects frontend to MongoDB backend
-const API_URL = 'http://localhost:5000/api';
+const API_URL = '/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = (): HeadersInit => {
     const token = localStorage.getItem('token');
     return {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // Bypass ngrok interstitial page for API requests
         ...(token && { Authorization: `Bearer ${token}` })
     };
 };
 
 // Generic fetch wrapper with error handling
 async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers: {
-            ...getAuthHeaders(),
-            ...options.headers
+    try {
+        const response = await fetch(`${API_URL}${endpoint}`, {
+            ...options,
+            headers: {
+                ...getAuthHeaders(),
+                ...options.headers
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Request failed' }));
+            throw new Error(error.message || `HTTP error! status: ${response.status}`);
         }
-    });
 
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Network error' }));
-        throw new Error(error.message || `HTTP error! status: ${response.status}`);
+        return response.json();
+    } catch (err) {
+        if (err instanceof Error) {
+            // Network errors (no internet, blocked by browser, etc.)
+            if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+                throw new Error('Unable to connect to server. Please check your connection and try again.');
+            }
+        }
+        throw err;
     }
-
-    return response.json();
 }
 
 // ==================== AUTH API ====================

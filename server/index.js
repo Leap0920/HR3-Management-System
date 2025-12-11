@@ -14,10 +14,11 @@ const app = express();
 // Body parser
 app.use(express.json());
 
-// Enable CORS
+// Enable CORS - Allow all origins for development (no credentials needed, using JWT in headers)
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://exudative-closely-annetta.ngrok-free.dev'],
-    credentials: true
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning']
 }));
 
 // Routes
