@@ -145,22 +145,40 @@ export default function Attendance() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredRecords.map((record) => (
-                            <tr key={record._id}>
-                                <td className="name-cell">{record.userId?.name || 'Unknown'}</td>
-                                <td className="role-cell">{record.userId?.department || '-'}</td>
-                                <td>{formatDate(record.date)}</td>
-                                <td className="time-cell"><Clock size={14} /><span>{formatTime(record.timeIn)}</span></td>
-                                <td className="time-cell"><Clock size={14} /><span>{formatTime(record.timeOut)}</span></td>
-                                <td>{record.hoursWorked?.toFixed(2) || '0.00'} hrs</td>
-                                <td className="overtime-cell">{record.overtime?.toFixed(2) || '0.00'} hrs</td>
-                                <td>
-                                    <span className={`status-badge-alt ${record.status}`}>
-                                        {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                                    </span>
+                        {filteredRecords.length > 0 ? (
+                            filteredRecords.map((record) => (
+                                <tr key={record._id}>
+                                    <td className="name-cell">{record.userId?.name || 'Unknown'}</td>
+                                    <td className="role-cell">{record.userId?.department || '-'}</td>
+                                    <td>{formatDate(record.date)}</td>
+                                    <td>
+                                        <span className="time-cell">
+                                            <Clock size={14} />
+                                            {formatTime(record.timeIn)}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span className="time-cell">
+                                            <Clock size={14} />
+                                            {formatTime(record.timeOut)}
+                                        </span>
+                                    </td>
+                                    <td>{record.hoursWorked?.toFixed(2) || '0.00'} hrs</td>
+                                    <td className="overtime-cell">{record.overtime?.toFixed(2) || '0.00'} hrs</td>
+                                    <td>
+                                        <span className={`status-badge-alt ${record.status}`}>
+                                            {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                                    No attendance records found
                                 </td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>

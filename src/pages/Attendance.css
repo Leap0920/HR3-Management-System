@@ -94,45 +94,85 @@
 }
 
 /* Attendance Table */
+.attendance-table {
+    width: 100%;
+}
+
+.attendance-table th {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
 .attendance-table th,
 .attendance-table td {
     white-space: nowrap;
+    vertical-align: middle;
+    padding: 16px 12px;
+}
+
+.attendance-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.attendance-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.name-cell {
+    color: #1e293b;
+    font-weight: 500;
+}
+
+.role-cell {
+    color: #64748b;
 }
 
 .time-cell {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: var(--text-muted);
+    color: #1e293b;
 }
 
 .time-cell svg {
-    color: var(--primary-color);
+    color: #5d5fdb;
+    flex-shrink: 0;
 }
 
 .overtime-cell {
-    color: #8b5cf6;
+    color: #1e293b;
 }
 
 .status-badge-alt {
     display: inline-block;
-    padding: 4px 10px;
-    border-radius: 4px;
+    padding: 6px 16px;
+    border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
 }
 
 .status-badge-alt.present {
-    background-color: transparent;
-    color: #22c55e;
+    background-color: #dcfce7;
+    color: #16a34a;
 }
 
 .status-badge-alt.late {
-    background-color: transparent;
-    color: #f97316;
+    background-color: #fef3c7;
+    color: #d97706;
 }
 
 .status-badge-alt.absent {
-    background-color: transparent;
-    color: #ef4444;
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.status-badge-alt.half-day {
+    background-color: #e0e7ff;
+    color: #4f46e5;
+}
+
+.status-badge-alt.on-leave {
+    background-color: #f3e8ff;
+    color: #9333ea;
 }
