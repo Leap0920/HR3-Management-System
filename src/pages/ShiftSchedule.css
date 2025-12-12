@@ -6,9 +6,34 @@
     margin-bottom: 20px;
 }
 
+@media (max-width: 768px) {
+    .view-controls {
+        gap: 12px;
+    }
+}
+
+@media (max-width: 640px) {
+    .view-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
 .view-tabs {
     display: flex;
     gap: 8px;
+}
+
+@media (max-width: 640px) {
+    .view-tabs {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .view-tab {
+        flex: 1;
+        justify-content: center;
+    }
 }
 
 .view-tab {
@@ -40,6 +65,12 @@
     width: 280px;
 }
 
+@media (max-width: 640px) {
+    .search-bar.compact {
+        width: 100%;
+    }
+}
+
 /* Calendar Styles - Redesigned for clarity */
 .calendar-container {
     background-color: var(--white);
@@ -48,10 +79,25 @@
     box-shadow: var(--shadow);
 }
 
+@media (max-width: 768px) {
+    .calendar-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
 .calendar-grid {
     display: grid;
     grid-template-columns: 70px repeat(6, 1fr);
     min-height: 600px;
+}
+
+@media (max-width: 768px) {
+    .calendar-grid {
+        min-width: 800px;
+        /* Force horizontal scroll on mobile */
+        min-height: 500px;
+    }
 }
 
 .time-column {

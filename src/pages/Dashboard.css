@@ -196,6 +196,20 @@
     gap: 24px;
 }
 
+@media (max-width: 1024px) {
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+}
+
+@media (max-width: 640px) {
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
 .action-button {
     background-color: var(--primary-color);
     color: var(--white);
@@ -209,6 +223,13 @@
     font-size: 0.9rem;
     transition: opacity 0.2s;
     box-shadow: 0 2px 4px rgba(93, 95, 219, 0.2);
+}
+
+@media (max-width: 640px) {
+    .action-button {
+        padding: 14px;
+        font-size: 0.85rem;
+    }
 }
 
 .action-button:hover {

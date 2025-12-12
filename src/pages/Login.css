@@ -17,6 +17,33 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
 
+@media (max-width: 480px) {
+    .login-container {
+        padding: 12px;
+        align-items: flex-start;
+        padding-top: 40px;
+    }
+
+    .login-card {
+        padding: 28px 24px;
+        border-radius: 12px;
+    }
+
+    .login-header {
+        margin-bottom: 24px;
+    }
+
+    .logo-container {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+    }
+
+    .login-header h1 {
+        font-size: 1.3rem;
+    }
+}
+
 .login-header {
     text-align: center;
     margin-bottom: 32px;
